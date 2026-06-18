@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Табло Оракула</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: var(--tg-theme-bg-color, #17212b);
+      --fg: var(--tg-theme-text-color, #f5f5f5);
+      --hint: var(--tg-theme-hint-color, #8a98a6);
+      --card: var(--tg-theme-secondary-bg-color, #232e3c);
+      --accent: var(--tg-theme-button-color, #5288c1);
+      --accent-fg: var(--tg-theme-button-text-color, #fff);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); padding: 14px 12px 84px; min-height: 100%;
+    }
+    .head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .head h1 { font-size: 18px; margin: 0; flex: 1; }
+    .head .upd { font-size: 11px; color: var(--hint); }
+    .view { display: none; animation: fade .25s ease; }
+    .view.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .banner {
+      background: linear-gradient(120deg, #d4a017, #8a6d0a); color: #fff;
+      border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+    .card {
+      background: var(--card); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card.me { outline: 2px solid var(--accent); }
+    .ava {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.15);
+    }
+    .pos { width: 22px; text-align: center; font-size: 14px; color: var(--hint); flex-shrink: 0; }
+    .name { flex: 1; font-size: 15px; line-height: 1.2; }
+    .name .sub { font-size: 12px; color: var(--hint); margin-top: 2px; }
+    .name .me-tag { font-size: 10px; background: var(--accent); color: var(--accent-fg);
+      padding: 1px 6px; border-radius: 6px; margin-left: 4px; vertical-align: middle; }
+    .coins { font-size: 15px; font-weight: 700; white-space: nowrap; }
+    .match-time { font-size: 12px; color: var(--hint); width: 44px; flex-shrink: 0; }
+    .match-teams { flex: 1; font-size: 14px; }
+    .score { font-weight: 700; font-size: 15px; }
+    .live { color: #e8534f; }
+    .badge-live { font-size: 9px; background: #e8534f; color: #fff; padding: 1px 5px;
+      border-radius: 6px; margin-left: 4px; animation: blink 1.2s infinite; }
+    @keyframes blink { 50% { opacity: .35; } }
+    .bet-btn { border: none; background: var(--accent); color: var(--accent-fg); font-size: 18px;
+      width: 32px; height: 32px; border-radius: 9px; cursor: pointer; flex-shrink: 0; }
+    .watch {
+      display: block; text-align: center; text-decoration: none; background: var(--card);
+      color: var(--fg); padding: 11px; border-radius: 12px; margin-bottom: 10px; font-size: 14px;
+    }
+    .faction { display: block; }
+    .faction .top { display: flex; align-items: center; gap: 8px; }
+    .faction .fname { font-size: 16px; font-weight: 600; }
+    .bar-bg { height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 8px; overflow: hidden; }
+    .bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+    .profile { text-align: center; padding-top: 8px; }
+    .profile .big-ava { width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 50px;
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.18); }
+    .profile .pname { font-size: 20px; font-weight: 700; }
+    .profile .pfac { font-size: 13px; color: var(--hint); margin-top: 2px; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+    .stat { background: var(--card); border-radius: 14px; padding: 14px 10px; }
+    .stat .v { font-size: 22px; font-weight: 700; }
+    .stat .l { font-size: 12px; color: var(--hint); margin-top: 2px; }
+    .block { background: var(--card); border-radius: 14px; padding: 12px; margin-top: 12px; text-align: left; }
+    .block h3 { margin: 0 0 8px; font-size: 13px; color: var(--hint); font-weight: 600; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge { font-size: 24px; } .badge.locked { filter: grayscale(1); opacity: .3; }
+    canvas { width: 100%; height: 56px; display: block; }
+    .share { width: 100%; border: none; background: var(--accent); color: var(--accent-fg);
+      padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 14px; }
+    .stage-h { font-size: 12px; color: var(--hint); margin: 14px 2px 6px; text-transform: uppercase; }
+    .feed-item { display: flex; gap: 8px; padding: 9px 12px; background: var(--card);
+      border-radius: 10px; margin-bottom: 6px; font-size: 14px; }
+    .feed-item .ft { color: var(--hint); font-size: 11px; white-space: nowrap; }
+    .empty { color: var(--hint); text-align: center; padding: 40px 12px; }
+    .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex;
+      background: var(--card); border-top: 1px solid rgba(255,255,255,.06);
+      padding: 6px 2px env(safe-area-inset-bottom); }
+    .nav button { flex: 1; border: none; background: none; color: var(--hint); cursor: pointer;
+      padding: 7px 1px; font-size: 10px; display: flex; flex-direction: column;
+      align-items: center; gap: 2px; font-family: inherit; }
+    .nav button .ic { font-size: 19px; }
+    .nav button.active { color: var(--accent); }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: flex-end; z-index: 50; }
+    .modal-bg.open { display: flex; }
+    .modal { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 18px 16px 26px; animation: up .25s ease; }
+    @keyframes up { from { transform: translateY(100%); } to { transform: none; } }
+    .modal h2 { font-size: 16px; margin: 0 0 14px; text-align: center; }
+    .picker { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+    .stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .stepper .t { font-size: 12px; color: var(--hint); max-width: 90px; text-align: center; }
+    .stepper .row { display: flex; align-items: center; gap: 10px; }
+    .stepper .row button { width: 36px; height: 36px; border-radius: 10px; border: none; font-size: 20px; background: var(--card); color: var(--fg); cursor: pointer; }
+    .stepper .row .num { font-size: 26px; font-weight: 700; width: 28px; text-align: center; }
+    .colon { font-size: 26px; font-weight: 700; padding-top: 18px; }
+    .go { width: 100%; border: none; background: var(--accent); color: var(--accent-fg); padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .hint-sm { font-size: 12px; color: var(--hint); text-align: center; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <h1>🔮 Табло Оракула</h1>
+    <div class="upd" id="upd"></div>
+  </div>
+
+  <div class="view active" id="v-oracles"></div>
+  <div class="view" id="v-today"></div>
+  <div class="view" id="v-bracket"></div>
+  <div class="view" id="v-feed"></div>
+  <div class="view" id="v-factions"></div>
+  <div class="view" id="v-me"></div>
+
+  <nav class="nav">
+    <button class="active" data-v="oracles"><span class="ic">🏆</span>Топ</button>
+    <button data-v="today"><span class="ic">⚽</span>Матчи</button>
+    <button data-v="bracket"><span class="ic">🗺</span>Сетка</button>
+    <button data-v="feed"><span class="ic">📜</span>Лента</button>
+    <button data-v="factions"><span class="ic">🤝</span>Лагеря</button>
+    <button data-v="me"><span class="ic">🎭</span>Я</button>
+  </nav>
+
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <h2 id="m-title"></h2>
+      <div class="picker">
+        <div class="stepper"><div class="t" id="m-home"></div>
+          <div class="row"><button onclick="step('h',-1)">−</button><span class="num" id="m-hs">1</span><button onclick="step('h',1)">+</button></div>
+        </div>
+        <div class="colon">:</div>
+        <div class="stepper"><div class="t" id="m-away"></div>
+          <div class="row"><button onclick="step('a',-1)">−</button><span class="num" id="m-as">1</span><button onclick="step('a',1)">+</button></div>
+        </div>
+      </div>
+      <button class="go" onclick="copyBet()">📋 Скопировать команду /прогноз</button>
+      <div class="hint-sm">Вставь её в чат клуба — ставка засчитается ботом.</div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp;
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    const myId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : null;
+    const medals = ["🥇", "🥈", "🥉"];
+    const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍"];
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const ava = (o) => `<div class="ava" style="background:${o.color}">${o.totem || '🎲'}</div>`;
+    function ago(ts) { const d = Math.max(0, Math.floor(Date.now()/1000 - ts));
+      if (d < 60) return 'только что'; if (d < 3600) return Math.floor(d/60)+' мин'; return Math.floor(d/3600)+' ч'; }
+
+    function renderOracles(d) {
+      const list = d.oracles || [];
+      let html = d.jackpot ? `<div class="banner">💸 <b>Джекпот дня: ${d.jackpot}💰</b><br>достанется первому точному счёту!</div>` : '';
+      if (!list.length) return html + '<div class="empty">Пока никто не сделал ставку 🤷<br>Будь первым — /прогноз</div>';
+      return html + list.map((o, i) => `
+        <div class="card ${o.uid === myId ? 'me' : ''}">
+          <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
+          <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}
+            <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}</div></div>
+          <div class="coins">${o.coins}💰</div></div>`).join('');
+    }
+    let TODAY = [];
+    function renderToday(d) {
+      TODAY = d.today || [];
+      const links = Array.isArray(d.watch) ? d.watch : [];
+      const watch = links.map(w => `<a class="watch wlink" href="${w.url}">${esc(w.label)}</a>`).join('');
+      if (!TODAY.length) return watch + '<div class="empty">Сегодня матчей ЧМ нет 🌴</div>';
+      return watch + TODAY.map((m, i) => {
+        const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
+        const fin = m.status === 'FINISHED';
+        let right;
+        if (m.score) right = `<span class="score ${live ? 'live' : ''}">${m.score}</span>${live ? '<span class="badge-live">LIVE</span>' : ''}`;
+        else if (fin) right = '<span class="match-time" style="width:auto">— : —</span>';
+        else right = `<button class="bet-btn" onclick="openBet(${i})">＋</button>`;
+        return `<div class="card"><div class="match-time">${fin ? '✓' : m.time}</div>
+          <div class="match-teams">${m.home_flag} ${esc(m.home)}<br>${m.away_flag} ${esc(m.away)}</div>${right}</div>`;
+      }).join('');
+    }
+    function renderScorers(d) {
+      const list = d.scorers || [];
+      if (!list.length) return '';
+      const md = ['🥇', '🥈', '🥉'];
+      return `<div class="stage-h">🥇 Бомбардиры</div>` + list.slice(0, 8).map((s, i) =>
+        `<div class="card"><div class="pos">${md[i] || '⚽'}</div>
+          <div class="name">${esc(s.player)}</div><div class="coins">${s.goals}⚽</div></div>`).join('');
+    }
+    function renderBracket(d) {
+      const scorers = renderScorers(d);
+      const list = d.bracket || [];
+      if (!list.length) return scorers + (scorers ? '' : '<div class="empty">Плей-офф ещё не начался 🗺<br>Сетка появится после групп.</div>');
+      const byStage = {};
+      list.forEach(m => { (byStage[m.stage] = byStage[m.stage] || []).push(m); });
+      return scorers + Object.keys(byStage).map(st => `<div class="stage-h">${esc(st)}</div>` +
+        byStage[st].map(m => `<div class="card"><div class="match-time">${m.status === 'FINISHED' ? '✓' : m.time}</div>
+          <div class="match-teams">${m.home_flag} ${esc(m.home)}<br>${m.away_flag} ${esc(m.away)}</div>
+          <span class="score">${m.score || '—'}</span></div>`).join('')).join('');
+    }
+    function renderFeed(d) {
+      const list = d.feed || [];
+      if (!list.length) return '<div class="empty">Лента пока пуста 📜<br>Тут будут голы, сенсации и рекорды.</div>';
+      return list.map(f => `<div class="feed-item"><span>${esc(f.text)}</span><span class="ft" style="margin-left:auto">${ago(f.ts)}</span></div>`).join('');
+    }
+    function renderFactions(d) {
+      const list = d.factions || [];
+      if (!list.length || list.every(f => !f.coins)) return '<div class="empty">Фракции ещё не набрали очков 🧘</div>';
+      const max = Math.max(1, ...list.map(f => f.coins)); const palette = ['#6c5ce7', '#e17055'];
+      return list.map((f, i) => `<div class="card faction"><div class="top">
+          <div class="fname">${f.emoji} ${esc(f.name)}</div>
+          <div class="coins" style="margin-left:auto">${f.coins}💰 · ${f.members}👥</div></div>
+          ${f.captain ? `<div class="sub" style="margin-top:6px">👑 капитан: ${esc(f.captain)}</div>` : ''}
+          <div class="bar-bg"><div class="bar" style="width:${Math.round(f.coins/max*100)}%;background:${palette[i%2]}"></div></div></div>`).join('');
+    }
+    let ME = null;
+    function renderMe(d) {
+      const list = d.oracles || [];
+      const idx = list.findIndex(o => o.uid === myId);
+      if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Сделай /прогноз — и появишься со своим тотемом.</div>'; }
+      const o = list[idx]; ME = o; ME.pos = idx + 1;
+      const have = new Set((o.ach || []).map(a => a.emoji));
+      const badges = ALL_ACH.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}">${e}</span>`).join('');
+      return `<div class="profile">
+        <div class="big-ava" style="background:${o.color}">${o.totem || '🎲'}</div>
+        <div class="pname">${esc(o.name)} ${o.mom || ''}</div>
+        ${o.title ? `<div class="pfac">🏷 «${esc(o.title)}»</div>` : ''}
+        <div class="pfac">${o.faction ? 'фракция ' + esc(o.faction) : ''} · место #${idx + 1}</div>
+        <div class="stats">
+          <div class="stat"><div class="v">${o.coins}💰</div><div class="l">монет</div></div>
+          <div class="stat"><div class="v">#${idx + 1}</div><div class="l">в рейтинге</div></div>
+          <div class="stat"><div class="v">${o.exact}🎯</div><div class="l">точных</div></div>
+          <div class="stat"><div class="v">${o.streak || 0}🔥</div><div class="l">рекорд серии</div></div>
+        </div>
+        <div class="block"><h3>📈 ФОРМА (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
+        <div class="block"><h3>🏅 НАГРАДЫ</h3><div class="badges">${badges}</div></div>
+        <button class="share" onclick="shareCard()">📤 Поделиться карточкой</button>
+      </div>`;
+    }
+    function drawSpark(form) {
+      const cv = $('spark'); if (!cv || !form || !form.length) return;
+      const ctx = cv.getContext('2d'), W = cv.width, H = cv.height, pad = 8, max = Math.max(1, ...form);
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent') || '#5288c1';
+      ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
+      form.forEach((v, i) => { const x = pad + (W-2*pad)*(i/(form.length-1)); const y = H-pad-(H-2*pad)*(v/max); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.stroke();
+      const li = form.length-1, lx = pad+(W-2*pad), ly = H-pad-(H-2*pad)*(form[li]/max);
+      ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 7); ctx.fill();
+    }
+    function shareCard() {
+      if (!ME) return;
+      const txt = `🔮 Мой ЧМ — ${ME.totem} ${ME.name}\n${ME.coins}💰 · место #${ME.pos} · ${ME.exact}🎯 · рекорд ${ME.streak || 0}🔥`;
+      if (navigator.share) navigator.share({ text: txt }).catch(() => {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => {
+        try { tg.showPopup({ title: 'Скопировано', message: txt, buttons: [{ type: 'ok' }] }); } catch (e) { alert(txt); }
+      });
+    }
+    // помощник ставки
+    let betIdx = 0, hs = 1, as = 1;
+    function openBet(i) { betIdx = i; hs = 1; as = 1; const m = TODAY[i];
+      $('m-title').textContent = m.home_flag + ' ' + m.home + ' — ' + m.away + ' ' + m.away_flag;
+      $('m-home').textContent = m.home; $('m-away').textContent = m.away;
+      $('m-hs').textContent = hs; $('m-as').textContent = as; $('modal-bg').classList.add('open'); }
+    function step(side, d) {
+      if (side === 'h') hs = Math.max(0, Math.min(15, hs + d)), $('m-hs').textContent = hs;
+      else as = Math.max(0, Math.min(15, as + d)), $('m-as').textContent = as;
+      try { tg.HapticFeedback.selectionChanged(); } catch (e) {} }
+    function copyBet() {
+      const m = TODAY[betIdx]; const cmd = `/прогноз ${m.home} ${hs}:${as} ${m.away}`;
+      const done = () => { try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+        try { tg.showPopup({ title: 'Скопировано', message: cmd + '\n\nВставь в чат клуба.', buttons: [{ type: 'ok' }] }); } catch (e) { alert('Скопировано:\n' + cmd); }
+        $('modal-bg').classList.remove('open'); };
+      if (navigator.clipboard) navigator.clipboard.writeText(cmd).then(done, done); else done(); }
+    $('modal-bg').onclick = (e) => { if (e.target.id === 'modal-bg') e.target.classList.remove('open'); };
+
+    let DATA = null, active = 'oracles';
+    function renderAll() {
+      if (!DATA) return;
+      $('v-oracles').innerHTML = renderOracles(DATA);
+      $('v-today').innerHTML = renderToday(DATA);
+      $('v-bracket').innerHTML = renderBracket(DATA);
+      $('v-feed').innerHTML = renderFeed(DATA);
+      $('v-factions').innerHTML = renderFactions(DATA);
+      $('v-me').innerHTML = renderMe(DATA);
+      $('upd').textContent = 'обновлено ' + ago(DATA.generated) + ' назад';
+      document.querySelectorAll('.wlink').forEach(wl => wl.onclick = (e) => {
+        e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
+      if (active === 'me' && ME) drawSpark(ME.form);
+    }
+    document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
+      try { tg.HapticFeedback.selectionChanged(); } catch (e) {}
+      active = b.dataset.v;
+      document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      $('v-' + active).classList.add('active');
+      if (active === 'me' && ME) drawSpark(ME.form);
+    });
+    function load() {
+      fetch('data.json?_=' + Date.now()).then(r => r.json()).then(d => { DATA = d; renderAll(); })
+        .catch(() => { if (!DATA) $('v-oracles').innerHTML = '<div class="empty">Данные пока не выгружены</div>'; });
+    }
+    load();
+    setInterval(load, 30000);   // 🔴 лайв-автообновление каждые 30 c
+  </script>
+</body>
+</html>
