@@ -348,6 +348,14 @@
     .hall-row .hr-w { color: var(--gold); font-weight: 700; font-size: 12.5px; }
     .ibtn { border: none; background: var(--card); color: var(--fg); border: 1px solid var(--line);
       border-radius: 12px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+    /* 🎬 Wrapped «Твой ЧМ» */
+    .wlead { font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--gold); }
+    .wstat { display: flex; align-items: center; gap: 11px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; padding: 13px; margin-bottom: 9px; }
+    .wstat .we { font-size: 22px; width: 30px; text-align: center; }
+    .wstat .wl { flex: 1; font-size: 13.5px; color: var(--hint); }
+    .wstat .wv { font-size: 15px; font-weight: 800; }
+    .wfoot { font-size: 13px; color: var(--hint); margin-top: 12px; text-align: center; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -414,6 +422,12 @@
   <div class="ach-screen hide" id="ach-screen">
     <div class="ach-head"><h2>🏅 Награды и прогресс</h2><button class="x press" onclick="closeAch()">✕</button></div>
     <div id="ach-list"></div>
+  </div>
+
+  <div class="ach-screen hide" id="wrapped-screen">
+    <div class="ach-head"><h2>🎬 Твой ЧМ-2026</h2><button class="x press" onclick="closeWrapped()">✕</button></div>
+    <div id="wrapped-body"></div>
+    <button class="share press" onclick="shareWrapped()" style="margin-top:14px">📤 Поделиться итогами</button>
   </div>
 
   <div class="ach-screen hide" id="rules-screen">
@@ -510,7 +524,7 @@
     const myId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : null;
     const medals = ["🥇", "🥈", "🥉"];
     const podium = ["gold", "silver", "bronze"];
-    const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍"];
+    const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍", "👑", "🔮", "⚔️"];
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     function facCls(o) {   // класс кольца аватарки по фракции
@@ -565,6 +579,9 @@
       { e: '🅰️', t: 'Ва-банкир', d: 'Рискнул всем и выиграл ва-банк' },
       { e: '🎯', t: 'Перфекционист дня', d: 'Закрыл все квесты дня' },
       { e: '🌍', t: 'Коллекционер сборных', d: 'Ставки на 12 разных сборных', cur: (o, d) => (d.me && d.me.collect) || 0, max: (o, d) => (d && d.collect_need) || 12 },
+      { e: '👑', t: 'Оракул недели', d: 'Впервые надел корону лучшего за неделю' },
+      { e: '🔮', t: 'Триждывенчанный', d: 'Носил корону недели 3 раза за сезон', cur: (o, d) => { const m = (d.crown_hall || []).find(r => r.uid === myId); return m ? m.weeks : 0; }, max: () => 3 },
+      { e: '⚔️', t: 'Цареубийца', d: 'Сверг прежнего Оракула и забрал корону' },
     ];
     function openAch() {
       const d = DATA, o = ME; if (!o) return;
@@ -584,6 +601,31 @@
     function closeAch() { $('ach-screen').classList.add('hide'); }
     function openRules() { $('rules-screen').classList.remove('hide'); haptic(); }
     function closeRules() { $('rules-screen').classList.add('hide'); }
+    function openWrapped() {
+      const me = (DATA || {}).me;
+      if (!me || !me.preds) { popup('Пока пусто', 'Сделай первый прогноз — и твой ЧМ оживёт.'); return; }
+      const rows = [
+        ['🏅', 'Место в клубе', me.pos ? ('#' + me.pos) : '—'],
+        ['🪙', 'Дублонов накоплено', me.coins],
+        ['🎯', 'Точных счётов', me.exact + ' / ' + me.preds + ' ставок'],
+        ['🔥', 'Лучшая серия точных', me.best_streak || 0],
+        ['🌍', 'Сборных охвачено', me.collect || 0],
+      ];
+      if (me.fav) rows.push(['⭐', 'Любимая сборная', me.fav.flag + ' ' + me.fav.ru]);
+      if (me.crown_weeks) rows.push(['👑', 'Недель под короной', me.crown_weeks]);
+      $('wrapped-body').innerHTML = `<div class="wlead">🎬 ${esc(me.name || 'Игрок')} · твой турнир пока что</div>` +
+        rows.map(r => `<div class="wstat"><span class="we">${r[0]}</span><span class="wl">${r[1]}</span><span class="wv">${esc(String(r[2]))}</span></div>`).join('') +
+        `<div class="wfoot">Турнир ещё идёт — твоя легенда пишется. 🎲🌴</div>`;
+      $('wrapped-screen').classList.remove('hide'); haptic();
+    }
+    function closeWrapped() { $('wrapped-screen').classList.add('hide'); }
+    function shareWrapped() {
+      const me = (DATA || {}).me; if (!me) return;
+      let txt = `🎬 Мой ЧМ-2026 в Клубе Сомнительных Решений:\n🏅 место #${me.pos || '—'} · 🪙 ${me.coins} · 🎯 ${me.exact}/${me.preds} точных`;
+      if (me.crown_weeks) txt += `\n👑 недель под короной Оракула: ${me.crown_weeks}`;
+      if (navigator.share) navigator.share({ text: txt }).catch(() => {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => popup('Скопировано', 'Кидай в чат клуба! 🏴‍☠️'));
+    }
     // 🎟 экспресс-билдер
     let expSel = [];
     function openExpress() {
@@ -835,6 +877,7 @@
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div>
           <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button>
+          <button class="ach-open press" onclick="openWrapped()">🎬 Твой ЧМ — итоги →</button>
           <button class="ach-open press" onclick="openRules()">📖 Как это работает →</button></div>
         ${historyBlock(d)}
         ${championBlock(d)}
