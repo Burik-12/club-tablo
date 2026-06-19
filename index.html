@@ -3,117 +3,204 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Табло Оракула</title>
+  <title>Табло Оракула · Кубик</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: var(--tg-theme-bg-color, #17212b);
-      --fg: var(--tg-theme-text-color, #f5f5f5);
-      --hint: var(--tg-theme-hint-color, #8a98a6);
-      --card: var(--tg-theme-secondary-bg-color, #232e3c);
-      --accent: var(--tg-theme-button-color, #5288c1);
-      --accent-fg: var(--tg-theme-button-text-color, #fff);
+      --bg: #0c0e16; --fg: #eef1f7; --hint: #8b93a7;
+      --card: #161a28; --card2: #1d2233; --line: rgba(124,92,255,.16);
+      --accent: #7c5cff; --accent2: #22d3ee; --gold: #ffce54;
+      --green: #3ddc97; --orange: #ff8e3c; --live: #ff5c6c; --accent-fg: #fff;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
     body {
       margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg); color: var(--fg); padding: 14px 12px 84px; min-height: 100%;
+      color: var(--fg); padding: 14px 12px 100px; min-height: 100%;
+      background:
+        radial-gradient(820px 440px at 50% -12%, rgba(124,92,255,.20), transparent 60%),
+        radial-gradient(680px 400px at 102% 2%, rgba(34,211,238,.16), transparent 58%),
+        radial-gradient(900px 540px at 0% 104%, rgba(255,142,60,.14), transparent 60%),
+        radial-gradient(700px 420px at 100% 100%, rgba(61,220,151,.10), transparent 58%),
+        var(--bg);
     }
-    .head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-    .head h1 { font-size: 18px; margin: 0; flex: 1; }
-    .head .upd { font-size: 11px; color: var(--hint); }
-    .view { display: none; animation: fade .25s ease; }
+    button { font-family: inherit; }
+    .press:active { transform: scale(.94); }
+    .head { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+    .head .logo { font-size: 24px; filter: drop-shadow(0 0 8px rgba(124,92,255,.6)); }
+    .head h1 { font-size: 17px; margin: 0; flex: 1; font-weight: 800; letter-spacing: .2px;
+      background: linear-gradient(90deg, #fff, #b9a6ff); -webkit-background-clip: text;
+      background-clip: text; -webkit-text-fill-color: transparent; }
+    .head h1 small { display: block; font-size: 10px; font-weight: 600; letter-spacing: 2px;
+      color: var(--hint); -webkit-text-fill-color: var(--hint); text-transform: uppercase; }
+    .head .upd { font-size: 10px; color: var(--hint); text-align: right; max-width: 76px; }
+    .view { display: none; animation: fade .28s ease; }
     .view.active { display: block; }
-    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .banner {
-      background: linear-gradient(120deg, #d4a017, #8a6d0a); color: #fff;
-      border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      background: linear-gradient(120deg, #ffce54, #ff8e3c); color: #2a1c00;
+      border-radius: 16px; padding: 13px 15px; margin-bottom: 12px; font-size: 14px; font-weight: 600;
+      box-shadow: 0 6px 20px rgba(255,142,60,.30);
     }
     .card {
-      background: var(--card); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      padding: 11px 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 11px;
     }
-    .card.me { outline: 2px solid var(--accent); }
+    .card.me { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px rgba(124,92,255,.25); }
+    .card.gold   { border-color: rgba(255,206,84,.55);  box-shadow: 0 6px 18px rgba(255,206,84,.16); }
+    .card.silver { border-color: rgba(197,206,224,.45); }
+    .card.bronze { border-color: rgba(205,127,80,.45); }
     .ava {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center; font-size: 20px;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.15);
+      width: 40px; height: 40px; border-radius: 13px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 21px;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.16);
     }
-    .pos { width: 22px; text-align: center; font-size: 14px; color: var(--hint); flex-shrink: 0; }
-    .name { flex: 1; font-size: 15px; line-height: 1.2; }
-    .name .sub { font-size: 12px; color: var(--hint); margin-top: 2px; }
+    .pos { width: 24px; text-align: center; font-size: 16px; font-weight: 700; color: var(--hint); flex-shrink: 0; }
+    .name { flex: 1; font-size: 15px; line-height: 1.2; min-width: 0; }
+    .name .sub { font-size: 12px; color: var(--hint); margin-top: 3px; }
     .name .me-tag { font-size: 10px; background: var(--accent); color: var(--accent-fg);
       padding: 1px 6px; border-radius: 6px; margin-left: 4px; vertical-align: middle; }
-    .coins { font-size: 15px; font-weight: 700; white-space: nowrap; }
-    .match-time { font-size: 12px; color: var(--hint); width: 44px; flex-shrink: 0; }
-    .match-teams { flex: 1; font-size: 14px; }
-    .score { font-weight: 700; font-size: 15px; }
-    .live { color: #e8534f; }
-    .badge-live { font-size: 9px; background: #e8534f; color: #fff; padding: 1px 5px;
-      border-radius: 6px; margin-left: 4px; animation: blink 1.2s infinite; }
+    .coins { font-size: 15px; font-weight: 800; white-space: nowrap; color: var(--gold); }
+    /* ── Матчи ── */
+    .match { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      padding: 11px 13px; margin-bottom: 9px; }
+    .mrow { display: flex; align-items: center; gap: 10px; }
+    .mteams { flex: 1; font-size: 14.5px; line-height: 1.5; min-width: 0; }
+    .mright { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .chip { font-size: 11px; padding: 3px 8px; border-radius: 9px; white-space: nowrap;
+      background: var(--card2); color: var(--hint); }
+    .chip.soon { background: rgba(255,142,60,.18); color: #ffb784; }
+    .chip.urgent { background: rgba(255,92,108,.20); color: #ff9aa6; }
+    .score { font-weight: 800; font-size: 17px; }
+    .live { color: var(--live); }
+    .badge-live { font-size: 9px; background: var(--live); color: #fff; padding: 2px 6px;
+      border-radius: 7px; margin-left: 5px; animation: blink 1.2s infinite; vertical-align: middle; }
     @keyframes blink { 50% { opacity: .35; } }
-    .bet-btn { border: none; background: var(--accent); color: var(--accent-fg); font-size: 18px;
-      width: 32px; height: 32px; border-radius: 9px; cursor: pointer; flex-shrink: 0; }
+    .bet-btn { border: none; background: linear-gradient(135deg, var(--accent), #6244e0);
+      color: var(--accent-fg); font-size: 18px; width: 34px; height: 34px; border-radius: 11px;
+      cursor: pointer; flex-shrink: 0; box-shadow: 0 3px 10px rgba(124,92,255,.35); }
+    .bet-btn.ghost { background: var(--card2); box-shadow: none; }
+    .youbet { font-size: 11px; color: var(--accent2); margin-right: 4px; align-self: center; white-space: nowrap; }
+    .mfoot { margin-top: 9px; }
+    .cons { display: flex; height: 7px; border-radius: 5px; overflow: hidden; background: rgba(255,255,255,.06); }
+    .cons span { display: block; height: 100%; }
+    .cons .h { background: var(--accent2); } .cons .d { background: #5a637a; } .cons .a { background: var(--orange); }
+    .cons-l { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--hint); margin-top: 5px; }
+    .against { color: #ffb784; font-weight: 600; }
     .watch {
-      display: block; text-align: center; text-decoration: none; background: var(--card);
-      color: var(--fg); padding: 11px; border-radius: 12px; margin-bottom: 10px; font-size: 14px;
+      display: block; text-align: center; text-decoration: none; border: 1px solid var(--line);
+      color: var(--fg); padding: 11px; border-radius: 12px; margin-bottom: 9px; font-size: 14px;
+      background: var(--card);
     }
+    .filters { display: flex; gap: 7px; margin-bottom: 11px; overflow-x: auto; padding-bottom: 3px;
+      -webkit-overflow-scrolling: touch; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filt { flex-shrink: 0; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 12px;
+      border: 1px solid var(--line); background: var(--card); color: var(--hint); cursor: pointer; }
+    .filt.on { background: linear-gradient(135deg, var(--accent), #6244e0); color: #fff; border-color: transparent;
+      box-shadow: 0 3px 12px rgba(124,92,255,.3); }
+    .azart { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+    .azb { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px;
+      border: 1px solid var(--line); background: var(--card2); color: var(--fg); cursor: pointer; }
+    .azb.done { color: var(--green); border-color: rgba(61,220,151,.4); }
+    .azb.off { color: var(--hint); opacity: .55; }
+    .exp { width: 100%; border: none; background: linear-gradient(135deg, var(--orange), #e6701f);
+      color: #2a1500; font-weight: 700; padding: 13px; border-radius: 13px; font-size: 14px;
+      margin-bottom: 10px; cursor: pointer; box-shadow: 0 5px 16px rgba(255,142,60,.3); }
+    .exp-done { text-align: center; color: var(--green); font-size: 13px; font-weight: 600;
+      padding: 10px; margin-bottom: 10px; border: 1px solid rgba(61,220,151,.3); border-radius: 12px; }
+    /* ── Фракции ── */
     .faction { display: block; }
     .faction .top { display: flex; align-items: center; gap: 8px; }
-    .faction .fname { font-size: 16px; font-weight: 600; }
-    .bar-bg { height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 8px; overflow: hidden; }
-    .bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
-    .profile { text-align: center; padding-top: 8px; }
-    .profile .big-ava { width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 10px;
-      display: flex; align-items: center; justify-content: center; font-size: 50px;
-      box-shadow: inset 0 0 0 3px rgba(255,255,255,.18); }
-    .profile .pname { font-size: 20px; font-weight: 700; }
-    .profile .pfac { font-size: 13px; color: var(--hint); margin-top: 2px; }
-    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
-    .stat { background: var(--card); border-radius: 14px; padding: 14px 10px; }
-    .stat .v { font-size: 22px; font-weight: 700; }
-    .stat .l { font-size: 12px; color: var(--hint); margin-top: 2px; }
-    .block { background: var(--card); border-radius: 14px; padding: 12px; margin-top: 12px; text-align: left; }
-    .block h3 { margin: 0 0 8px; font-size: 13px; color: var(--hint); font-weight: 600; }
-    .badges { display: flex; flex-wrap: wrap; gap: 8px; }
-    .badge { font-size: 24px; } .badge.locked { filter: grayscale(1); opacity: .3; }
+    .faction .fname { font-size: 16px; font-weight: 700; }
+    .bar-bg { height: 9px; border-radius: 5px; background: rgba(255,255,255,.07); margin-top: 9px; overflow: hidden; }
+    .bar { height: 100%; border-radius: 5px; transition: width .6s ease; }
+    /* ── Профиль ── */
+    .profile { text-align: center; padding-top: 6px; }
+    .profile .big-ava { width: 96px; height: 96px; border-radius: 28px; margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 52px;
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.18), 0 8px 26px rgba(124,92,255,.3); }
+    .profile .pname { font-size: 21px; font-weight: 800; }
+    .profile .pfac { font-size: 13px; color: var(--hint); margin-top: 3px; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 16px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 15px 10px; }
+    .stat .v { font-size: 23px; font-weight: 800; }
+    .stat .l { font-size: 12px; color: var(--hint); margin-top: 3px; }
+    .block { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      padding: 13px; margin-top: 12px; text-align: left; }
+    .block h3 { margin: 0 0 9px; font-size: 12px; color: var(--hint); font-weight: 700;
+      letter-spacing: .6px; text-transform: uppercase; }
+    .badges { display: flex; flex-wrap: wrap; gap: 9px; }
+    .badge { font-size: 25px; } .badge.locked { filter: grayscale(1); opacity: .28; }
+    .hrow { display: flex; align-items: center; gap: 9px; padding: 9px 2px; font-size: 13px;
+      border-bottom: 1px solid var(--line); }
+    .hrow:last-child { border-bottom: none; }
+    .hrow .ht { font-size: 17px; flex-shrink: 0; letter-spacing: -2px; }
+    .hrow .hs { flex: 1; color: var(--hint); min-width: 0; }
+    .hrow .hs b { color: var(--fg); }
+    .hrow .hres { white-space: nowrap; font-weight: 700; }
+    .hres.win { color: var(--green); } .hres.miss { color: var(--hint); }
     canvas { width: 100%; height: 56px; display: block; }
-    .share { width: 100%; border: none; background: var(--accent); color: var(--accent-fg);
-      padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 14px; }
-    .stage-h { font-size: 12px; color: var(--hint); margin: 14px 2px 6px; text-transform: uppercase; }
-    .feed-item { display: flex; gap: 8px; padding: 9px 12px; background: var(--card);
-      border-radius: 10px; margin-bottom: 6px; font-size: 14px; }
+    .share { width: 100%; border: none; background: linear-gradient(135deg, var(--accent), #6244e0);
+      color: var(--accent-fg); padding: 13px; border-radius: 13px; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-top: 14px; box-shadow: 0 5px 16px rgba(124,92,255,.32); }
+    .stage-h { font-size: 12px; color: var(--accent2); margin: 16px 2px 7px; text-transform: uppercase;
+      letter-spacing: .8px; font-weight: 700; }
+    .feed-item { display: flex; gap: 9px; padding: 10px 13px; background: var(--card);
+      border: 1px solid var(--line); border-radius: 12px; margin-bottom: 7px; font-size: 14px; }
     .feed-item .ft { color: var(--hint); font-size: 11px; white-space: nowrap; }
-    .empty { color: var(--hint); text-align: center; padding: 40px 12px; }
-    .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex;
-      background: var(--card); border-top: 1px solid rgba(255,255,255,.06);
-      padding: 6px 2px env(safe-area-inset-bottom); }
+    .empty { color: var(--hint); text-align: center; padding: 44px 12px; line-height: 1.6; }
+    /* ── Навигация ── */
+    .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 2px;
+      background: rgba(13,15,24,.94); backdrop-filter: blur(14px);
+      border-top: 1px solid var(--line); padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); z-index: 40; }
     .nav button { flex: 1; border: none; background: none; color: var(--hint); cursor: pointer;
-      padding: 7px 1px; font-size: 10px; display: flex; flex-direction: column;
-      align-items: center; gap: 2px; font-family: inherit; }
-    .nav button .ic { font-size: 19px; }
-    .nav button.active { color: var(--accent); }
-    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: flex-end; z-index: 50; }
+      padding: 9px 1px; font-size: 11px; font-weight: 600; border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; }
+    .nav button .ic { font-size: 25px; line-height: 1; }
+    .nav button.active { color: #fff; background: linear-gradient(135deg, rgba(124,92,255,.30), rgba(34,211,238,.18)); }
+    .nav button.active .ic { filter: drop-shadow(0 0 8px rgba(124,92,255,.8)); transform: translateY(-1px); }
+    /* ── Модалки ── */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: none;
+      align-items: flex-end; z-index: 50; backdrop-filter: blur(2px); }
     .modal-bg.open { display: flex; }
-    .modal { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 18px 16px 26px; animation: up .25s ease; }
+    .modal { background: linear-gradient(180deg, #141826, var(--bg)); width: 100%;
+      border-radius: 22px 22px 0 0; padding: 18px 16px 28px; animation: up .28s ease;
+      border-top: 1px solid var(--line); }
     @keyframes up { from { transform: translateY(100%); } to { transform: none; } }
-    .modal h2 { font-size: 16px; margin: 0 0 14px; text-align: center; }
-    .picker { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
-    .stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .stepper .t { font-size: 12px; color: var(--hint); max-width: 90px; text-align: center; }
+    .modal h2 { font-size: 16px; margin: 0 0 4px; text-align: center; }
+    .presets { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin: 14px 0 6px; }
+    .preset { border: 1px solid var(--line); background: var(--card); color: var(--fg);
+      border-radius: 11px; padding: 8px 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .preset.dice { background: linear-gradient(135deg, var(--accent2), #14b8c8); color: #06222a; border: none; }
+    .picker { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 16px; }
+    .stepper { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .stepper .t { font-size: 12px; color: var(--hint); max-width: 92px; text-align: center; }
     .stepper .row { display: flex; align-items: center; gap: 10px; }
-    .stepper .row button { width: 36px; height: 36px; border-radius: 10px; border: none; font-size: 20px; background: var(--card); color: var(--fg); cursor: pointer; }
-    .stepper .row .num { font-size: 26px; font-weight: 700; width: 28px; text-align: center; }
-    .colon { font-size: 26px; font-weight: 700; padding-top: 18px; }
-    .go { width: 100%; border: none; background: var(--accent); color: var(--accent-fg); padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
-    .hint-sm { font-size: 12px; color: var(--hint); text-align: center; margin-top: 10px; }
+    .stepper .row button { width: 38px; height: 38px; border-radius: 12px; border: none; font-size: 21px;
+      background: var(--card2); color: var(--fg); cursor: pointer; }
+    .stepper .row .num { font-size: 30px; font-weight: 800; width: 30px; text-align: center; }
+    .colon { font-size: 28px; font-weight: 800; padding-top: 20px; color: var(--hint); }
+    .go { width: 100%; border: none; background: linear-gradient(135deg, var(--accent), #6244e0);
+      color: var(--accent-fg); padding: 15px; border-radius: 13px; font-size: 15px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 5px 16px rgba(124,92,255,.32); }
+    .hint-sm { font-size: 12px; color: var(--hint); text-align: center; margin-top: 11px; }
+    .cgrid { max-height: 54vh; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cgrid button { background: var(--card); color: var(--fg); border: 1px solid var(--line);
+      border-radius: 12px; padding: 12px 10px; font-size: 14px; text-align: left; cursor: pointer; }
+    .cgrid button.sel { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+    /* ── Праздничный «бросок» ── */
+    .celebrate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 96px; z-index: 60; pointer-events: none; animation: cel .8s ease forwards; }
+    @keyframes cel { 0% { transform: scale(.3) rotate(-25deg); opacity: 0; }
+      35% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      70% { transform: scale(1) rotate(0); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
   </style>
 </head>
 <body>
   <div class="head">
-    <h1>🔮 Табло Оракула</h1>
+    <span class="logo">🎲</span>
+    <h1>Табло Оракула<small>🌴 Клуб Сомнительных Решений</small></h1>
     <div class="upd" id="upd"></div>
   </div>
 
@@ -136,59 +223,163 @@
   <div class="modal-bg" id="modal-bg">
     <div class="modal">
       <h2 id="m-title"></h2>
+      <div class="hint-sm" style="margin-top:0">Быстрый счёт или крути сам</div>
+      <div class="presets" id="m-presets"></div>
       <div class="picker">
         <div class="stepper"><div class="t" id="m-home"></div>
-          <div class="row"><button onclick="step('h',-1)">−</button><span class="num" id="m-hs">1</span><button onclick="step('h',1)">+</button></div>
+          <div class="row"><button class="press" onclick="step('h',-1)">−</button><span class="num" id="m-hs">1</span><button class="press" onclick="step('h',1)">+</button></div>
         </div>
         <div class="colon">:</div>
         <div class="stepper"><div class="t" id="m-away"></div>
-          <div class="row"><button onclick="step('a',-1)">−</button><span class="num" id="m-as">1</span><button onclick="step('a',1)">+</button></div>
+          <div class="row"><button class="press" onclick="step('a',-1)">−</button><span class="num" id="m-as">1</span><button class="press" onclick="step('a',1)">+</button></div>
         </div>
       </div>
-      <button class="go" onclick="copyBet()">📋 Скопировать команду /прогноз</button>
-      <div class="hint-sm">Вставь её в чат клуба — ставка засчитается ботом.</div>
+      <button class="go press" onclick="sendBet()">🎲 Поставить прогноз</button>
+      <div class="hint-sm">Ставка засчитается сразу — прямо здесь.</div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="champ-bg">
+    <div class="modal">
+      <h2>🏆 Выбери чемпиона ЧМ</h2>
+      <div class="hint-sm" style="margin-top:0">Угадаешь — джекпот в финале</div>
+      <div id="champ-list" class="cgrid" style="margin-top:12px"></div>
     </div>
   </div>
 
   <script>
     const tg = window.Telegram && window.Telegram.WebApp;
-    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#0c0e16'); } catch (e) {}
+    // Адрес бэкенда: если окно открыто как Mini App с Pages — он зашит в start_param (base64url),
+    // иначе пусто = тот же origin (когда страницу отдаёт сам бэкенд, напр. из лички).
+    function backendBase() {
+      try {
+        const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+        if (!sp) return '';
+        let b64 = sp.replace(/-/g, '+').replace(/_/g, '/');
+        b64 += '==='.slice((b64.length + 3) % 4);
+        return decodeURIComponent(escape(atob(b64))).replace(/\/+$/, '');
+      } catch (e) { return ''; }
+    }
+    const API = backendBase();
+    const api = (p) => API ? (API + '/' + p.replace(/^\//, '')) : p;
     const myId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : null;
     const medals = ["🥇", "🥈", "🥉"];
+    const podium = ["gold", "silver", "bronze"];
     const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍"];
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const ava = (o) => `<div class="ava" style="background:${o.color}">${o.totem || '🎲'}</div>`;
     function ago(ts) { const d = Math.max(0, Math.floor(Date.now()/1000 - ts));
       if (d < 60) return 'только что'; if (d < 3600) return Math.floor(d/60)+' мин'; return Math.floor(d/3600)+' ч'; }
+    function haptic(t) { try { t === 'ok' ? tg.HapticFeedback.notificationOccurred('success') : tg.HapticFeedback.selectionChanged(); } catch (e) {} }
+    function celebrate(emoji) {
+      const el = document.createElement('div'); el.className = 'celebrate'; el.textContent = emoji;
+      document.body.appendChild(el); setTimeout(() => el.remove(), 800);
+    }
+    // ⏳ сколько осталось до начала матча (= закрытие ставок)
+    function untilKick(ts) {
+      if (!ts) return null;
+      const s = ts - Math.floor(Date.now()/1000); if (s <= 0) return null;
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+      let label = h >= 24 ? Math.floor(h/24)+' дн' : h > 0 ? h+' ч '+m+' м' : m+' мин';
+      return { label, cls: s < 1800 ? 'urgent' : s < 7200 ? 'soon' : '' };
+    }
 
     function renderOracles(d) {
       const list = d.oracles || [];
-      let html = d.jackpot ? `<div class="banner">💸 <b>Джекпот дня: ${d.jackpot}💰</b><br>достанется первому точному счёту!</div>` : '';
-      if (!list.length) return html + '<div class="empty">Пока никто не сделал ставку 🤷<br>Будь первым — /прогноз</div>';
+      let html = d.jackpot ? `<div class="banner">🏴‍☠️ Сундук дня: ${d.jackpot}🪙 — заберёт первый точный счёт!</div>` : '';
+      if (!list.length) return html + '<div class="empty">Пока никто не сделал ставку 🤷<br>Будь первым — вкладка «Матчи».</div>';
       return html + list.map((o, i) => `
-        <div class="card ${o.uid === myId ? 'me' : ''}">
+        <div class="card ${o.uid === myId ? 'me' : (podium[i] || '')}">
           <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
           <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}
-            <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}</div></div>
-          <div class="coins">${o.coins}💰</div></div>`).join('');
+            <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}${o.mom ? ' · ' + o.mom : ''}</div></div>
+          <div class="coins">${o.coins}🪙</div></div>`).join('');
     }
     let TODAY = [];
+    function consensus(m) {
+      const sp = m.split; if (!sp || !sp.total || m.status === 'FINISHED') return '';
+      const t = sp.total, ph = Math.round(sp.h/t*100), pd = Math.round(sp.d/t*100), pa = 100 - ph - pd;
+      const mb = (DATA.me && DATA.me.bets && DATA.me.bets[m.id]) || null;
+      let against = '';
+      if (mb) {
+        const p = mb.split(':'), mh = +p[0], ma = +p[1];
+        const mine = mh > ma ? 'h' : mh < ma ? 'a' : 'd';
+        const top = (sp.h >= sp.d && sp.h >= sp.a) ? 'h' : (sp.a >= sp.d ? 'a' : 'd');
+        if (mine !== top && t >= 3) against = ' · <span class="against">🐴 против толпы</span>';
+      }
+      return `<div class="mfoot">
+        <div class="cons"><span class="h" style="width:${ph}%"></span><span class="d" style="width:${pd}%"></span><span class="a" style="width:${pa}%"></span></div>
+        <div class="cons-l"><span>П1 ${ph}%</span><span>Х ${pd}%</span><span>П2 ${pa}% · 🗳${t}${against}</span></div>
+      </div>`;
+    }
+    const FILTERS = [['today', 'Сегодня'], ['tomorrow', 'Завтра'], ['all', 'Все'], ['mine', 'Мои'], ['ko', 'Плей-офф']];
+    let matchFilter = 'today';
+    function matchPass(m, d) {
+      if (matchFilter === 'today') return m.day === 0;
+      if (matchFilter === 'tomorrow') return m.day === 1;
+      if (matchFilter === 'mine') return !!(d.me && d.me.bets && d.me.bets[m.id]);
+      if (matchFilter === 'ko') return !!m.ko;
+      return true;
+    }
+    function setFilter(f) { matchFilter = f; haptic(); $('v-today').innerHTML = renderToday(DATA); }
+    function azartRow(m, d) {
+      const me = d.me || {};
+      const mb = me.bets && me.bets[m.id];
+      if (!mb || m.score || m.status === 'FINISHED') return '';
+      const btns = [];
+      if (d.allin_on) {
+        if (me.allin_mid === m.id) btns.push(`<span class="azb done">🔥 Ва-банк ✓</span>`);
+        else if (me.allin_mid) btns.push(`<span class="azb off">🔥 ва-банк занят</span>`);
+        else btns.push(`<button class="azb press" onclick="allin(${m.id})">🔥 Ва-банк</button>`);
+      }
+      if (d.insurance_on) {
+        if ((me.insured || []).indexOf(m.id) >= 0) btns.push(`<span class="azb done">🛡 Застраховано</span>`);
+        else btns.push(`<button class="azb press" onclick="insure(${m.id})">🛡 Страховка</button>`);
+      }
+      return btns.length ? `<div class="azart">${btns.join('')}</div>` : '';
+    }
     function renderToday(d) {
       TODAY = d.today || [];
       const links = Array.isArray(d.watch) ? d.watch : [];
       const watch = links.map(w => `<a class="watch wlink" href="${w.url}">${esc(w.label)}</a>`).join('');
-      if (!TODAY.length) return watch + '<div class="empty">Сегодня матчей ЧМ нет 🌴</div>';
-      return watch + TODAY.map((m, i) => {
+      const chips = `<div class="filters">${FILTERS.map(f =>
+        `<button class="filt ${matchFilter === f[0] ? 'on' : ''}" onclick="setFilter('${f[0]}')">${f[1]}</button>`).join('')}</div>`;
+      // 🎟 экспресс — глобальная кнопка над списком
+      const betCount = Object.keys((d.me && d.me.bets) || {}).length;
+      let exp = '';
+      if (d.me && d.me.parlay_open) exp = `<div class="exp-done">🎟 Экспресс собран — ждём матчи</div>`;
+      else if (d.parlay_on && betCount >= 2) exp = `<button class="exp press" onclick="parlay()">🎟 Собрать экспресс из ${betCount} ставок</button>`;
+      const cards = TODAY.map((m, i) => {
+        if (!matchPass(m, d)) return '';
         const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
         const fin = m.status === 'FINISHED';
         let right;
         if (m.score) right = `<span class="score ${live ? 'live' : ''}">${m.score}</span>${live ? '<span class="badge-live">LIVE</span>' : ''}`;
-        else if (fin) right = '<span class="match-time" style="width:auto">— : —</span>';
-        else right = `<button class="bet-btn" onclick="openBet(${i})">＋</button>`;
-        return `<div class="card"><div class="match-time">${fin ? '✓' : m.time}</div>
-          <div class="match-teams">${m.home_flag} ${esc(m.home)}<br>${m.away_flag} ${esc(m.away)}</div>${right}</div>`;
+        else if (fin) right = '<span class="chip">— : —</span>';
+        else {
+          const mb = (d.me && d.me.bets && d.me.bets[m.id]) ? d.me.bets[m.id] : null;
+          const jok = !!(d.me && d.me.jokers && d.me.jokers.indexOf(m.id) >= 0);
+          const cd = untilKick(m.ts);
+          const jbtn = (mb && d.joker_on)
+            ? (jok ? `<span class="bet-btn ghost" style="opacity:.5">🃏</span>`
+                   : `<button class="bet-btn ghost press" onclick="joker(${m.id})">🃏</button>`) : '';
+          right = (mb ? `<span class="youbet">ты ${mb}${jok ? ' 🃏' : ''}</span>` : '')
+            + (cd && !mb ? `<span class="chip ${cd.cls}">⏳ ${cd.label}</span>` : '')
+            + jbtn + `<button class="bet-btn press" onclick="openBet(${i})">${mb ? '✏️' : '＋'}</button>`;
+        }
+        const when = m.day === 0 ? m.time : m.date + ' ' + m.time;
+        const timeChip = fin ? '✓' : (live ? '' : when);
+        return `<div class="match">
+          <div class="mrow">
+            <div class="mteams">${timeChip ? `<span class="chip" style="margin-right:6px">${timeChip}</span>` : ''}${m.home_flag} ${esc(m.home)} <span style="color:var(--hint)">—</span> ${m.away_flag} ${esc(m.away)}</div>
+            <div class="mright">${right}</div>
+          </div>${consensus(m)}${azartRow(m, d)}</div>`;
       }).join('');
+      const empty = cards.trim() ? '' :
+        `<div class="empty">В этом разделе матчей нет 🌴<br>Переключи фильтр выше.</div>`;
+      return chips + exp + watch + (cards || empty);
     }
     function renderScorers(d) {
       const list = d.scorers || [];
@@ -196,7 +387,7 @@
       const md = ['🥇', '🥈', '🥉'];
       return `<div class="stage-h">🥇 Бомбардиры</div>` + list.slice(0, 8).map((s, i) =>
         `<div class="card"><div class="pos">${md[i] || '⚽'}</div>
-          <div class="name">${esc(s.player)}</div><div class="coins">${s.goals}⚽</div></div>`).join('');
+          <div class="name">${esc(s.player)}</div><div class="coins" style="color:var(--accent2)">${s.goals}⚽</div></div>`).join('');
     }
     function renderBracket(d) {
       const scorers = renderScorers(d);
@@ -205,30 +396,30 @@
       const byStage = {};
       list.forEach(m => { (byStage[m.stage] = byStage[m.stage] || []).push(m); });
       return scorers + Object.keys(byStage).map(st => `<div class="stage-h">${esc(st)}</div>` +
-        byStage[st].map(m => `<div class="card"><div class="match-time">${m.status === 'FINISHED' ? '✓' : m.time}</div>
-          <div class="match-teams">${m.home_flag} ${esc(m.home)}<br>${m.away_flag} ${esc(m.away)}</div>
+        byStage[st].map(m => `<div class="card"><div class="chip">${m.status === 'FINISHED' ? '✓' : m.time}</div>
+          <div class="name">${m.home_flag} ${esc(m.home)}<br>${m.away_flag} ${esc(m.away)}</div>
           <span class="score">${m.score || '—'}</span></div>`).join('')).join('');
     }
     function renderFeed(d) {
       const list = d.feed || [];
-      if (!list.length) return '<div class="empty">Лента пока пуста 📜<br>Тут будут голы, сенсации и рекорды.</div>';
+      if (!list.length) return '<div class="empty">Судовой журнал пуст 📜<br>Сюда лягут голы, сенсации и рекорды.</div>';
       return list.map(f => `<div class="feed-item"><span>${esc(f.text)}</span><span class="ft" style="margin-left:auto">${ago(f.ts)}</span></div>`).join('');
     }
     function renderFactions(d) {
       const list = d.factions || [];
-      if (!list.length || list.every(f => !f.coins)) return '<div class="empty">Фракции ещё не набрали очков 🧘</div>';
-      const max = Math.max(1, ...list.map(f => f.coins)); const palette = ['#6c5ce7', '#e17055'];
+      if (!list.length || list.every(f => !f.coins)) return '<div class="empty">Фракции ещё не набрали очков 🧘<br>Поставь прогноз — попадёшь в лагерь.</div>';
+      const max = Math.max(1, ...list.map(f => f.coins)); const palette = ['#7c5cff', '#ff8e3c'];
       return list.map((f, i) => `<div class="card faction"><div class="top">
           <div class="fname">${f.emoji} ${esc(f.name)}</div>
-          <div class="coins" style="margin-left:auto">${f.coins}💰 · ${f.members}👥</div></div>
-          ${f.captain ? `<div class="sub" style="margin-top:6px">👑 капитан: ${esc(f.captain)}</div>` : ''}
+          <div class="coins" style="margin-left:auto;color:var(--fg)">${f.coins}🪙 · ${f.members}👥</div></div>
+          ${f.captain ? `<div class="sub" style="margin-top:7px;color:var(--hint)">👑 капитан: ${esc(f.captain)}</div>` : ''}
           <div class="bar-bg"><div class="bar" style="width:${Math.round(f.coins/max*100)}%;background:${palette[i%2]}"></div></div></div>`).join('');
     }
     let ME = null;
     function renderMe(d) {
       const list = d.oracles || [];
       const idx = list.findIndex(o => o.uid === myId);
-      if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Сделай /прогноз — и появишься со своим тотемом.</div>'; }
+      if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Поставь прогноз на вкладке «Матчи» — и появишься.</div>' + championBlock(d); }
       const o = list[idx]; ME = o; ME.pos = idx + 1;
       const have = new Set((o.ach || []).map(a => a.emoji));
       const badges = ALL_ACH.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}">${e}</span>`).join('');
@@ -238,51 +429,119 @@
         ${o.title ? `<div class="pfac">🏷 «${esc(o.title)}»</div>` : ''}
         <div class="pfac">${o.faction ? 'фракция ' + esc(o.faction) : ''} · место #${idx + 1}</div>
         <div class="stats">
-          <div class="stat"><div class="v">${o.coins}💰</div><div class="l">монет</div></div>
+          <div class="stat"><div class="v" style="color:var(--gold)">${o.coins}🪙</div><div class="l">дублонов</div></div>
           <div class="stat"><div class="v">#${idx + 1}</div><div class="l">в рейтинге</div></div>
           <div class="stat"><div class="v">${o.exact}🎯</div><div class="l">точных</div></div>
           <div class="stat"><div class="v">${o.streak || 0}🔥</div><div class="l">рекорд серии</div></div>
         </div>
-        <div class="block"><h3>📈 ФОРМА (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
-        <div class="block"><h3>🏅 НАГРАДЫ</h3><div class="badges">${badges}</div></div>
-        <button class="share" onclick="shareCard()">📤 Поделиться карточкой</button>
+        <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
+        <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div></div>
+        ${historyBlock(d)}
+        ${championBlock(d)}
+        <button class="share press" onclick="shareCard()">📤 Поделиться карточкой</button>
       </div>`;
     }
     function drawSpark(form) {
       const cv = $('spark'); if (!cv || !form || !form.length) return;
       const ctx = cv.getContext('2d'), W = cv.width, H = cv.height, pad = 8, max = Math.max(1, ...form);
       ctx.clearRect(0, 0, W, H);
-      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent') || '#5288c1';
-      ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
+      const grad = ctx.createLinearGradient(0, 0, W, 0);
+      grad.addColorStop(0, '#22d3ee'); grad.addColorStop(1, '#7c5cff');
+      ctx.strokeStyle = grad; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.beginPath();
       form.forEach((v, i) => { const x = pad + (W-2*pad)*(i/(form.length-1)); const y = H-pad-(H-2*pad)*(v/max); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
       ctx.stroke();
       const li = form.length-1, lx = pad+(W-2*pad), ly = H-pad-(H-2*pad)*(form[li]/max);
-      ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#7c5cff'; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 7); ctx.fill();
     }
     function shareCard() {
       if (!ME) return;
-      const txt = `🔮 Мой ЧМ — ${ME.totem} ${ME.name}\n${ME.coins}💰 · место #${ME.pos} · ${ME.exact}🎯 · рекорд ${ME.streak || 0}🔥`;
+      const txt = `🔮 Мой ЧМ — ${ME.totem} ${ME.name}\n${ME.coins}🪙 · место #${ME.pos} · ${ME.exact}🎯 · рекорд ${ME.streak || 0}🔥`;
       if (navigator.share) navigator.share({ text: txt }).catch(() => {});
       else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => {
         try { tg.showPopup({ title: 'Скопировано', message: txt, buttons: [{ type: 'ok' }] }); } catch (e) { alert(txt); }
       });
     }
-    // помощник ставки
+    // ── помощник ставки ──
     let betIdx = 0, hs = 1, as = 1;
-    function openBet(i) { betIdx = i; hs = 1; as = 1; const m = TODAY[i];
+    const PRESETS = [[1,0],[2,1],[1,1],[2,0],[0,0],[3,1]];
+    function setScore(h, a) { hs = h; as = a; $('m-hs').textContent = hs; $('m-as').textContent = as; haptic(); }
+    function rollDice() {                       // 🎲 правдоподобный случайный счёт
+      const w = [0,0,0,1,1,1,1,2,2,2,3,4];       // голы реалистично смещены к 0-2
+      setScore(w[Math.floor(Math.random()*w.length)], w[Math.floor(Math.random()*w.length)]);
+      celebrate('🎲');
+    }
+    function openBet(i) { betIdx = i; const m = TODAY[i]; setScore(1, 1);
       $('m-title').textContent = m.home_flag + ' ' + m.home + ' — ' + m.away + ' ' + m.away_flag;
       $('m-home').textContent = m.home; $('m-away').textContent = m.away;
-      $('m-hs').textContent = hs; $('m-as').textContent = as; $('modal-bg').classList.add('open'); }
+      $('m-presets').innerHTML = PRESETS.map(p => `<button class="preset press" onclick="setScore(${p[0]},${p[1]})">${p[0]}:${p[1]}</button>`).join('')
+        + `<button class="preset dice press" onclick="rollDice()">🎲 Кубик кинет</button>`;
+      $('modal-bg').classList.add('open'); }
     function step(side, d) {
       if (side === 'h') hs = Math.max(0, Math.min(15, hs + d)), $('m-hs').textContent = hs;
       else as = Math.max(0, Math.min(15, as + d)), $('m-as').textContent = as;
-      try { tg.HapticFeedback.selectionChanged(); } catch (e) {} }
-    function copyBet() {
-      const m = TODAY[betIdx]; const cmd = `/прогноз ${m.home} ${hs}:${as} ${m.away}`;
-      const done = () => { try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-        try { tg.showPopup({ title: 'Скопировано', message: cmd + '\n\nВставь в чат клуба.', buttons: [{ type: 'ok' }] }); } catch (e) { alert('Скопировано:\n' + cmd); }
-        $('modal-bg').classList.remove('open'); };
-      if (navigator.clipboard) navigator.clipboard.writeText(cmd).then(done, done); else done(); }
+      haptic(); }
+    function popup(title, message) {
+      try { tg.showPopup({ title, message, buttons: [{ type: 'ok' }] }); } catch (e) { alert(title + '\n' + message); }
+    }
+    function initOrWarn() {
+      const init = (tg && tg.initData) ? tg.initData : '';
+      if (!init) { popup('Открой через бота', 'Чтобы действовать, открой табло кнопкой /табло в чате клуба.'); return null; }
+      return init;
+    }
+    function apiAction(path, payload, okTitle, cel) {
+      const init = initOrWarn(); if (!init) return;
+      fetch(api(path), { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Init-Data': init },
+        body: JSON.stringify(payload) })
+        .then(r => r.json()).then(res => {
+          if (res.ok) {
+            haptic('ok'); if (cel) celebrate(cel);
+            popup(okTitle, res.msg); if (res.state) { DATA = res.state; renderAll(); }
+            $('modal-bg').classList.remove('open'); $('champ-bg').classList.remove('open');
+          } else { popup('Не вышло', res.error || res.msg || 'Ошибка'); }
+        }).catch(() => popup('Сеть', 'Не достучался до сервера. Попробуй ещё раз.'));
+    }
+    function joker(mid) { apiAction('api/joker', { match_id: mid }, '🃏 Джокер', '🃏'); }
+    function allin(mid) { apiAction('api/allin', { match_id: mid }, '🔥 Ва-банк', '🔥'); }
+    function insure(mid) { apiAction('api/insurance', { match_id: mid }, '🛡 Страховка', '🛡'); }
+    function parlay() { apiAction('api/parlay', {}, '🎟 Экспресс', '🎟'); }
+    function historyBlock(d) {
+      const h = (d.me && d.me.history) || [];
+      if (!h.length) return '';
+      const ic = { exact: '🎯 точно', diff: '➕ разница', outcome: '✅ исход', miss: '❌ мимо' };
+      const rows = h.map(x => {
+        const win = x.result !== 'miss';
+        return `<div class="hrow">
+          <span class="ht">${x.hf}${x.af}</span>
+          <span class="hs">ты <b>${x.pred}</b> · факт ${x.real} <span style="opacity:.7">· ${ic[x.result] || ''}</span></span>
+          <span class="hres ${win ? 'win' : 'miss'}">${x.coins > 0 ? '+' + x.coins : '+0'}🪙</span>
+        </div>`;
+      }).join('');
+      return `<div class="block"><h3>📜 История ставок</h3>${rows}</div>`;
+    }
+    function championBlock(d) {
+      const c = d.me && d.me.champion;
+      if (!d.champion_open) return c ? `<div class="block"><h3>🏆 Чемпион</h3><div class="pfac">${c.flag} ${esc(c.ru)} · окно закрыто</div></div>` : '';
+      return `<div class="block"><h3>🏆 Чемпион турнира</h3>`
+        + (c ? `<div class="pfac" style="margin-bottom:9px">твой выбор: ${c.flag} ${esc(c.ru)}</div>` : '')
+        + `<button class="share press" style="margin-top:0" onclick="openChampion()">${c ? '🔁 Сменить чемпиона' : '🏆 Выбрать чемпиона'}</button></div>`;
+    }
+    function openChampion() {
+      const teams = (DATA && DATA.teams) || [];
+      const cur = (DATA && DATA.me && DATA.me.champion) ? DATA.me.champion.en : null;
+      $('champ-list').innerHTML = teams.map(t => {
+        const en = t.en.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `<button class="press ${t.en === cur ? 'sel' : ''}" onclick="pickChampion('${en}')">${t.flag} ${esc(t.ru)}</button>`;
+      }).join('');
+      $('champ-bg').classList.add('open');
+    }
+    function pickChampion(en) { apiAction('api/champion', { team: en }, '🏆 Чемпион', '🏆'); }
+    document.addEventListener('DOMContentLoaded', () => {
+      const cb = $('champ-bg'); if (cb) cb.onclick = (e) => { if (e.target.id === 'champ-bg') e.target.classList.remove('open'); };
+    });
+    function sendBet() {
+      const m = TODAY[betIdx]; if (!m) return;
+      apiAction('api/predict', { match_id: m.id, home: hs, away: as }, '🎲 Ставка принята', '🪙');
+    }
     $('modal-bg').onclick = (e) => { if (e.target.id === 'modal-bg') e.target.classList.remove('open'); };
 
     let DATA = null, active = 'oracles';
@@ -294,13 +553,13 @@
       $('v-feed').innerHTML = renderFeed(DATA);
       $('v-factions').innerHTML = renderFactions(DATA);
       $('v-me').innerHTML = renderMe(DATA);
-      $('upd').textContent = 'обновлено ' + ago(DATA.generated) + ' назад';
+      $('upd').textContent = 'обновлено ' + ago(DATA.generated);
       document.querySelectorAll('.wlink').forEach(wl => wl.onclick = (e) => {
         e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
       if (active === 'me' && ME) drawSpark(ME.form);
     }
     document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
-      try { tg.HapticFeedback.selectionChanged(); } catch (e) {}
+      haptic();
       active = b.dataset.v;
       document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
@@ -309,8 +568,13 @@
       if (active === 'me' && ME) drawSpark(ME.form);
     });
     function load() {
-      fetch('data.json?_=' + Date.now()).then(r => r.json()).then(d => { DATA = d; renderAll(); })
-        .catch(() => { if (!DATA) $('v-oracles').innerHTML = '<div class="empty">Данные пока не выгружены</div>'; });
+      const init = (tg && tg.initData) ? tg.initData : '';
+      fetch(api('api/state'), { headers: init ? { 'X-Init-Data': init } : {} })
+        .then(r => { if (!r.ok) throw 0; return r.json(); })
+        .then(d => { DATA = d; renderAll(); })
+        .catch(() => fetch('data.json?_=' + Date.now()).then(r => r.json())
+          .then(d => { DATA = d; renderAll(); })
+          .catch(() => { if (!DATA) $('v-oracles').innerHTML = '<div class="empty">Данные пока не выгружены</div>'; }));
     }
     load();
     setInterval(load, 30000);   // 🔴 лайв-автообновление каждые 30 c
