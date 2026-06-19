@@ -13,10 +13,10 @@
       --green: #3ddc97; --orange: #ff8e3c; --live: #ff5c6c; --accent-fg: #fff;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; }
+    html, body { height: 100%; overflow: hidden; }
     body {
       margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      color: var(--fg); padding: 14px 12px calc(120px + env(safe-area-inset-bottom)); min-height: 100%;
+      color: var(--fg);
       background:
         radial-gradient(820px 440px at 50% -12%, rgba(124,92,255,.20), transparent 60%),
         radial-gradient(680px 400px at 102% 2%, rgba(34,211,238,.16), transparent 58%),
@@ -24,6 +24,9 @@
         radial-gradient(700px 420px at 100% 100%, rgba(61,220,151,.10), transparent 58%),
         var(--bg);
     }
+    /* внутренний скролл-контейнер — листается нативно, тело не двигается (фикс прокрутки в Telegram) */
+    #scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 14px 12px calc(120px + env(safe-area-inset-bottom)); }
     button { font-family: inherit; }
     .press:active { transform: scale(.94); }
     .head { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
@@ -292,9 +295,43 @@
         radial-gradient(680px 400px at 102% 2%, rgba(124,92,255,.16), transparent 58%),
         radial-gradient(900px 540px at 0% 104%, rgba(255,142,60,.16), transparent 60%), var(--bg); }
     body.playoff .head h1 { background: linear-gradient(90deg, #fff, #ffce54); -webkit-background-clip: text; background-clip: text; }
+    /* стрелка движения в топе */
+    .mv { font-size: 11px; font-weight: 800; margin-left: 6px; }
+    .mv.up { color: var(--green); } .mv.down { color: var(--live); }
+    /* минута live */
+    .sb-min { color: var(--live); font-weight: 800; }
+    /* 🏅 полноэкранные ачивки */
+    .ach-screen { position: fixed; inset: 0; z-index: 82; background: var(--bg); overflow-y: auto;
+      padding: 18px 16px calc(30px + env(safe-area-inset-bottom));
+      background-image: radial-gradient(700px 380px at 50% 0%, rgba(124,92,255,.18), transparent 60%); }
+    .ach-screen.hide { display: none; }
+    .ach-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .ach-head h2 { font-size: 20px; margin: 0; flex: 1; font-weight: 800; }
+    .ach-head .x { border: none; background: var(--card); color: var(--fg); border-radius: 12px;
+      width: 40px; height: 40px; font-size: 18px; cursor: pointer; }
+    .aitem { display: flex; gap: 13px; align-items: center; background: var(--card); border: 1px solid var(--line);
+      border-radius: 16px; padding: 13px; margin-bottom: 10px; }
+    .aitem .aemo { font-size: 38px; filter: grayscale(1); opacity: .4; flex-shrink: 0; width: 46px; text-align: center; }
+    .aitem.got .aemo { filter: none; opacity: 1; }
+    .aitem .at { font-size: 15px; font-weight: 700; }
+    .aitem .ad { font-size: 12.5px; color: var(--hint); margin-top: 3px; line-height: 1.3; }
+    .apg { height: 8px; border-radius: 5px; background: rgba(255,255,255,.08); margin-top: 9px; overflow: hidden; }
+    .apg-bar { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width .6s ease; }
+    .apg-l { font-size: 11px; color: var(--hint); margin-top: 4px; }
+    .ach-open { width: 100%; border: none; background: var(--card2); color: var(--fg); border: 1px solid var(--line);
+      border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    /* экспресс-билдер */
+    .exp-pick { display: flex; align-items: center; gap: 11px; padding: 12px; background: var(--card);
+      border: 1px solid var(--line); border-radius: 13px; margin-bottom: 8px; cursor: pointer; }
+    .exp-pick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .exp-pick .chk { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--hint);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .exp-pick.on .chk { background: var(--accent); border-color: var(--accent); }
+    .exp-pick .et { flex: 1; font-size: 13.5px; } .exp-pick .eb { font-size: 12px; color: var(--accent2); }
   </style>
 </head>
 <body>
+  <div id="scroll">
   <div class="head">
     <span class="logo">🎲</span>
     <h1>Табло Оракула<small>🌴 Клуб Сомнительных Решений</small></h1>
@@ -307,6 +344,7 @@
   <div class="view" id="v-feed"></div>
   <div class="view" id="v-factions"></div>
   <div class="view" id="v-me"></div>
+  </div><!-- /#scroll -->
 
   <nav class="nav">
     <button class="active" data-v="oracles"><span class="ic">🏆</span>Топ</button>
@@ -350,6 +388,20 @@
 
   <div class="modal-bg" id="match-bg">
     <div class="modal"><h2 id="md-title"></h2><div id="md-body" class="mdetail"></div></div>
+  </div>
+
+  <div class="ach-screen hide" id="ach-screen">
+    <div class="ach-head"><h2>🏅 Награды и прогресс</h2><button class="x press" onclick="closeAch()">✕</button></div>
+    <div id="ach-list"></div>
+  </div>
+
+  <div class="modal-bg" id="exp-bg">
+    <div class="modal">
+      <h2>🎟 Собрать экспресс</h2>
+      <div class="hint-sm" style="margin-top:0">Отметь 2–4 матча со своими прогнозами</div>
+      <div id="exp-list" style="margin-top:14px"></div>
+      <button class="go press" id="exp-go" onclick="parlayBuild()">🎟 Собрать</button>
+    </div>
   </div>
 
   <div class="modal-bg" id="champ-bg">
@@ -429,6 +481,55 @@
       '🌍': 'Глобус — ставил на 12+ разных сборных',
     };
     function badgeInfo(e) { popup(e + ' Награда', ACH_DESC[e] || 'Достижение оракула'); }
+    const ACH_META = [
+      { e: '🥅', t: 'Мастер скуки', d: 'Угадал точный 0:0' },
+      { e: '🧙', t: 'Нострадамус клуба', d: '5 точных счётов подряд', cur: (o) => o.streak || 0, max: () => 5 },
+      { e: '🐴', t: 'Знаток тёмных лошадок', d: 'Пошёл против всех — и угадал' },
+      { e: '💩', t: 'День сурка', d: '3+ ставки за день и все мимо' },
+      { e: '🎟', t: 'Экспресс-маэстро', d: 'Собрал и взял экспресс целиком' },
+      { e: '🅰️', t: 'Ва-банкир', d: 'Рискнул всем и выиграл ва-банк' },
+      { e: '🎯', t: 'Перфекционист дня', d: 'Закрыл все квесты дня' },
+      { e: '🌍', t: 'Коллекционер сборных', d: 'Ставки на 12 разных сборных', cur: (o, d) => (d.me && d.me.collect) || 0, max: (o, d) => (d && d.collect_need) || 12 },
+    ];
+    function openAch() {
+      const d = DATA, o = ME; if (!o) return;
+      const have = new Set((o.ach || []).map(a => a.emoji));
+      $('ach-list').innerHTML = ACH_META.map(a => {
+        const got = have.has(a.e);
+        let prog = '';
+        if (!got && a.max) {
+          const cur = a.cur(o, d), mx = a.max(o, d), p = Math.min(100, Math.round(cur / mx * 100));
+          prog = `<div class="apg"><div class="apg-bar" style="width:${p}%"></div></div><div class="apg-l">${cur} / ${mx}</div>`;
+        }
+        return `<div class="aitem ${got ? 'got' : ''}"><div class="aemo">${a.e}</div>
+          <div class="ainfo"><div class="at">${a.t} ${got ? '✅' : ''}</div><div class="ad">${a.d}</div>${prog}</div></div>`;
+      }).join('');
+      $('ach-screen').classList.remove('hide');
+    }
+    function closeAch() { $('ach-screen').classList.add('hide'); }
+    // 🎟 экспресс-билдер
+    let expSel = [];
+    function openExpress() {
+      const d = DATA; expSel = [];
+      const elig = (d.today || []).filter(m => m.open && d.me && d.me.bets && d.me.bets[m.id]);
+      if (elig.length < 2) { popup('Мало ставок', 'Нужно ≥2 прогноза на ближайшие матчи.'); return; }
+      $('exp-list').innerHTML = elig.map(m => `<div class="exp-pick" data-id="${m.id}" onclick="toggleExp(this,${m.id})">
+        <div class="chk"></div><div class="et">${m.home_flag} ${esc(m.home)} — ${esc(m.away)} ${m.away_flag}</div>
+        <div class="eb">${d.me.bets[m.id]}</div></div>`).join('');
+      $('exp-bg').classList.add('open');
+    }
+    function toggleExp(el, id) {
+      const i = expSel.indexOf(id);
+      if (i >= 0) { expSel.splice(i, 1); el.classList.remove('on'); el.querySelector('.chk').textContent = ''; }
+      else { if (expSel.length >= 4) { popup('Лимит', 'Максимум 4 матча в экспрессе.'); return; }
+        expSel.push(id); el.classList.add('on'); el.querySelector('.chk').textContent = '✓'; }
+      haptic();
+    }
+    function parlayBuild() {
+      if (expSel.length < 2) { popup('Мало', 'Отметь минимум 2 матча.'); return; }
+      apiAction('api/parlay', { match_ids: expSel }, '🎟 Экспресс', '🎟');
+      $('exp-bg').classList.remove('open');
+    }
     let prevScores = {}, scoresSeen = false;
     function checkGoals(d) {
       (d.today || []).forEach(m => {
@@ -479,7 +580,7 @@
       return html + podiumHtml(list) + list.map((o, i) => `
         <div class="card ${o.uid === myId ? 'me myrow' : (podium[i] || '')}">
           <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
-          <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}
+          <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}${o.delta > 0 ? `<span class="mv up">▲${o.delta}</span>` : o.delta < 0 ? `<span class="mv down">▼${-o.delta}</span>` : ''}
             <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}${o.mom ? ' · ' + o.mom : ''}</div></div>
           <div class="coins">${o.coins}🪙</div></div>`).join('');
     }
@@ -536,7 +637,7 @@
       const betCount = Object.keys((d.me && d.me.bets) || {}).length;
       let exp = '';
       if (d.me && d.me.parlay_open) exp = `<div class="exp-done">🎟 Экспресс собран — ждём матчи</div>`;
-      else if (d.parlay_on && betCount >= 2) exp = `<button class="exp press" onclick="parlay()">🎟 Собрать экспресс из ${betCount} ставок</button>`;
+      else if (d.parlay_on && betCount >= 2) exp = `<button class="exp press" onclick="openExpress()">🎟 Собрать экспресс</button>`;
       const cards = TODAY.map((m, i) => {
         if (!matchPass(m, d)) return '';
         const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
@@ -545,7 +646,7 @@
         // центр табло: счёт (live/итог) или VS + время
         let mid;
         if (m.score) mid = `<div class="sb-score ${live ? 'live' : ''}">${m.score}</div>`
-          + (live ? '<div class="sb-when"><span class="badge-live">LIVE</span></div>' : '<div class="sb-when">✓ итог</div>');
+          + (live ? `<div class="sb-when"><span class="badge-live">LIVE</span>${m.minute ? ` <span class="sb-min">${m.minute}'</span>` : ''}</div>` : '<div class="sb-when">✓ итог</div>');
         else mid = `<div class="sb-vs">VS</div><div class="sb-when">${when}</div>`;
         // нижний ряд управления (только до начала)
         let ctl = '';
@@ -641,7 +742,8 @@
         </div>
         ${dailyBlock(d)}
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
-        <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div></div>
+        <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div>
+          <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button></div>
         ${historyBlock(d)}
         ${championBlock(d)}
         <button class="share press" onclick="shareCard()">🪪 Поделиться паспортом</button>
@@ -849,6 +951,7 @@
     }
     $('modal-bg').onclick = (e) => { if (e.target.id === 'modal-bg') e.target.classList.remove('open'); };
     $('match-bg').onclick = (e) => { if (e.target.id === 'match-bg') e.target.classList.remove('open'); };
+    $('exp-bg').onclick = (e) => { if (e.target.id === 'exp-bg') e.target.classList.remove('open'); };
 
     let DATA = null, active = 'oracles';
     function renderAll() {
@@ -874,6 +977,7 @@
       b.classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       $('v-' + active).classList.add('active');
+      const sc = $('scroll'); if (sc) sc.scrollTop = 0;
       if (active === 'me' && ME) { drawSpark(ME.form); countUp($('me-coins'), ME.coins); }
     });
     function skeleton() { return Array(6).fill('<div class="sk"></div>').join(''); }
