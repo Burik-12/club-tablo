@@ -16,7 +16,7 @@
     html, body { height: 100%; }
     body {
       margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-      color: var(--fg); padding: 14px 12px 100px; min-height: 100%;
+      color: var(--fg); padding: 14px 12px calc(120px + env(safe-area-inset-bottom)); min-height: 100%;
       background:
         radial-gradient(820px 440px at 50% -12%, rgba(124,92,255,.20), transparent 60%),
         radial-gradient(680px 400px at 102% 2%, rgba(34,211,238,.16), transparent 58%),
@@ -64,7 +64,21 @@
     .coins { font-size: 15px; font-weight: 800; white-space: nowrap; color: var(--gold); }
     /* ── Матчи ── */
     .match { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-      padding: 11px 13px; margin-bottom: 9px; }
+      padding: 12px 13px; margin-bottom: 9px; }
+    /* табло-счёт */
+    .sb { display: flex; align-items: center; gap: 8px; }
+    .sb-team { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+    .sb-flag { font-size: 34px; line-height: 1; }
+    .sb-name { font-size: 12.5px; font-weight: 600; text-align: center; line-height: 1.1;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .sb-mid { flex-shrink: 0; min-width: 88px; text-align: center; }
+    .sb-score { font-size: 28px; font-weight: 800; letter-spacing: 1px;
+      background: #0c0e16; border: 1px solid var(--line); border-radius: 11px; padding: 5px 4px; }
+    .sb-score.live { color: var(--live); border-color: rgba(255,92,108,.5); }
+    .sb-vs { font-size: 13px; color: var(--hint); font-weight: 700; }
+    .sb-when { font-size: 11px; color: var(--hint); margin-top: 3px; }
+    .mctl { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .mrow { display: flex; align-items: center; gap: 10px; }
     .mteams { flex: 1; font-size: 14.5px; line-height: 1.5; min-width: 0; }
     .mright { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -299,7 +313,11 @@
 
   <script>
     const tg = window.Telegram && window.Telegram.WebApp;
-    try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#0c0e16'); } catch (e) {}
+    try {
+      tg.ready(); tg.expand();
+      tg.setHeaderColor && tg.setHeaderColor('#0c0e16');
+      tg.disableVerticalSwipes && tg.disableVerticalSwipes();   // чтобы свайп-закрытие не воровал прокрутку
+    } catch (e) {}
     // Адрес бэкенда: если окно открыто как Mini App с Pages — он зашит в start_param (base64url),
     // иначе пусто = тот же origin (когда страницу отдаёт сам бэкенд, напр. из лички).
     function backendBase() {
@@ -474,27 +492,32 @@
         if (!matchPass(m, d)) return '';
         const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
         const fin = m.status === 'FINISHED';
-        let right;
-        if (m.score) right = `<span class="score ${live ? 'live' : ''}">${m.score}</span>${live ? '<span class="badge-live">LIVE</span>' : ''}`;
-        else if (fin) right = '<span class="chip">— : —</span>';
-        else {
+        const when = m.day === 0 ? m.time : m.date + ' ' + m.time;
+        // центр табло: счёт (live/итог) или VS + время
+        let mid;
+        if (m.score) mid = `<div class="sb-score ${live ? 'live' : ''}">${m.score}</div>`
+          + (live ? '<div class="sb-when"><span class="badge-live">LIVE</span></div>' : '<div class="sb-when">✓ итог</div>');
+        else mid = `<div class="sb-vs">VS</div><div class="sb-when">${when}</div>`;
+        // нижний ряд управления (только до начала)
+        let ctl = '';
+        if (!m.score && !fin) {
           const mb = (d.me && d.me.bets && d.me.bets[m.id]) ? d.me.bets[m.id] : null;
           const jok = !!(d.me && d.me.jokers && d.me.jokers.indexOf(m.id) >= 0);
           const cd = untilKick(m.ts);
           const jbtn = (mb && d.joker_on)
             ? (jok ? `<span class="bet-btn ghost" style="opacity:.5">🃏</span>`
                    : `<button class="bet-btn ghost press" onclick="joker(${m.id})">🃏</button>`) : '';
-          right = (mb ? `<span class="youbet">ты ${mb}${jok ? ' 🃏' : ''}</span>` : '')
-            + (cd && !mb ? `<span class="chip ${cd.cls}">⏳ ${cd.label}</span>` : '')
-            + jbtn + `<button class="bet-btn press" onclick="openBet(${i})">${mb ? '✏️' : '＋'}</button>`;
+          ctl = `<div class="mctl">`
+            + (mb ? `<span class="youbet">ты ${mb}${jok ? ' 🃏' : ''}</span>` : '')
+            + (cd ? `<span class="chip ${cd.cls}">⏳ ${cd.label}</span>` : '')
+            + jbtn + `<button class="bet-btn press" onclick="openBet(${i})">${mb ? '✏️' : '＋'}</button></div>`;
         }
-        const when = m.day === 0 ? m.time : m.date + ' ' + m.time;
-        const timeChip = fin ? '✓' : (live ? '' : when);
         return `<div class="match">
-          <div class="mrow">
-            <div class="mteams">${timeChip ? `<span class="chip" style="margin-right:6px">${timeChip}</span>` : ''}${m.home_flag} ${esc(m.home)} <span style="color:var(--hint)">—</span> ${m.away_flag} ${esc(m.away)}</div>
-            <div class="mright">${right}</div>
-          </div>${consensus(m)}${azartRow(m, d)}</div>`;
+          <div class="sb">
+            <div class="sb-team"><span class="sb-flag">${m.home_flag}</span><span class="sb-name">${esc(m.home)}</span></div>
+            <div class="sb-mid">${mid}</div>
+            <div class="sb-team"><span class="sb-flag">${m.away_flag}</span><span class="sb-name">${esc(m.away)}</span></div>
+          </div>${ctl}${consensus(m)}${azartRow(m, d)}</div>`;
       }).join('');
       const empty = cards.trim() ? '' :
         `<div class="empty">В этом разделе матчей нет 🌴<br>Переключи фильтр выше.</div>`;
@@ -571,7 +594,7 @@
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div></div>
         ${historyBlock(d)}
         ${championBlock(d)}
-        <button class="share press" onclick="shareCard()">📤 Поделиться карточкой</button>
+        <button class="share press" onclick="shareCard()">🪪 Поделиться паспортом</button>
       </div>`;
     }
     function drawSpark(form) {
@@ -586,13 +609,73 @@
       const li = form.length-1, lx = pad+(W-2*pad), ly = H-pad-(H-2*pad)*(form[li]/max);
       ctx.fillStyle = '#7c5cff'; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 7); ctx.fill();
     }
-    function shareCard() {
-      if (!ME) return;
+    function shareText() {
       const txt = `🔮 Мой ЧМ — ${ME.totem} ${ME.name}\n${ME.coins}🪙 · место #${ME.pos} · ${ME.exact}🎯 · рекорд ${ME.streak || 0}🔥`;
       if (navigator.share) navigator.share({ text: txt }).catch(() => {});
       else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => {
         try { tg.showPopup({ title: 'Скопировано', message: txt, buttons: [{ type: 'ok' }] }); } catch (e) { alert(txt); }
       });
+    }
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath(); ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    function shareCard() {   // 🪪 рисуем паспорт оракула картинкой и шерим
+      if (!ME) return;
+      const o = ME, W = 1080, H = 1350, cv = document.createElement('canvas');
+      cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+      const draw = (img) => {
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, '#181d30'); g.addColorStop(1, '#0a0c14');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        // неоновая рамка
+        ctx.strokeStyle = '#7c5cff'; ctx.lineWidth = 8; roundRect(ctx, 28, 28, W - 56, H - 56, 40); ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#8b93a7'; ctx.font = '600 34px -apple-system, sans-serif';
+        ctx.fillText('🎲 ТАБЛО ОРАКУЛА · ЧМ-2026', W / 2, 120);
+        // аватар-круг
+        const cx = W / 2, cy = 330, R = 130;
+        ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.closePath(); ctx.clip();
+        if (img) { ctx.drawImage(img, cx - R, cy - R, R * 2, R * 2); }
+        else { ctx.fillStyle = o.color || '#7c5cff'; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+          ctx.fillStyle = '#fff'; ctx.font = '120px sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText(o.totem || '🎲', cx, cy + 8); ctx.textBaseline = 'alphabetic'; }
+        ctx.restore();
+        ctx.lineWidth = 7; ctx.strokeStyle = '#ffce54'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+        // имя + звание
+        ctx.fillStyle = '#fff'; ctx.font = '800 58px -apple-system, sans-serif'; ctx.fillText(o.name, W / 2, 560);
+        if (o.title) { ctx.fillStyle = '#b9a6ff'; ctx.font = '600 34px -apple-system, sans-serif'; ctx.fillText('🏷 «' + o.title + '»', W / 2, 612); }
+        ctx.fillStyle = '#8b93a7'; ctx.font = '34px -apple-system, sans-serif';
+        ctx.fillText((o.faction ? 'фракция ' + o.faction + ' · ' : '') + 'место #' + o.pos, W / 2, 668);
+        // плитки статов
+        const tiles = [[o.coins + '', 'дублонов', '#ffce54'], ['#' + o.pos, 'в рейтинге', '#fff'],
+          [o.exact + '🎯', 'точных', '#fff'], [(o.streak || 0) + '🔥', 'рекорд', '#fff']];
+        const tw = (W - 56 * 2 - 30) / 2, th = 180;
+        tiles.forEach((t, i) => {
+          const x = 56 + (i % 2) * (tw + 30), y = 760 + Math.floor(i / 2) * (th + 30);
+          ctx.fillStyle = '#161a28'; roundRect(ctx, x, y, tw, th, 28); ctx.fill();
+          ctx.fillStyle = t[2]; ctx.font = '800 72px -apple-system, sans-serif'; ctx.fillText(t[0], x + tw / 2, y + 95);
+          ctx.fillStyle = '#8b93a7'; ctx.font = '34px -apple-system, sans-serif'; ctx.fillText(t[1], x + tw / 2, y + 145);
+        });
+        ctx.fillStyle = '#5a637a'; ctx.font = '30px -apple-system, sans-serif';
+        ctx.fillText('Клуб Сомнительных Решений · @somnitelniy_zavsegdatay_bot', W / 2, H - 70);
+        // экспорт
+        cv.toBlob((blob) => {
+          if (!blob) return shareText();
+          const file = new File([blob], 'oracle.png', { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file] }).catch(() => {});
+          } else {
+            const url = URL.createObjectURL(blob);
+            try { tg.openLink ? tg.openLink(url) : window.open(url, '_blank'); } catch (e) { window.open(url, '_blank'); }
+          }
+        }, 'image/png');
+      };
+      if (o.photo) {
+        const im = new Image(); im.crossOrigin = 'anonymous';
+        im.onload = () => draw(im); im.onerror = () => draw(null);
+        im.src = api('avatar/' + o.photo);
+      } else { draw(null); }
     }
     // ── помощник ставки ──
     let betIdx = 0, hs = 1, as = 1;
