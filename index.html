@@ -328,6 +328,22 @@
       flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
     .exp-pick.on .chk { background: var(--accent); border-color: var(--accent); }
     .exp-pick .et { flex: 1; font-size: 13.5px; } .exp-pick .eb { font-size: 12px; color: var(--accent2); }
+    /* экран «Как это работает» */
+    .rsec { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 11px; }
+    .rsec .rt { font-size: 15.5px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .rsec .rd { font-size: 13px; color: var(--hint); margin-top: 6px; line-height: 1.45; }
+    .rsec .rd b { color: var(--fg); font-weight: 700; }
+    .rlead { font-size: 13.5px; color: var(--hint); line-height: 1.5; margin-bottom: 14px; }
+    .rcrown { background: linear-gradient(135deg, rgba(255,206,84,.18), rgba(124,92,255,.14));
+      border-color: rgba(255,206,84,.45); }
+    /* плашка «Оракул недели» в Топе + значок 🔮 у имени */
+    .weekbar { display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, rgba(255,206,84,.16), rgba(124,92,255,.12));
+      border: 1px solid rgba(255,206,84,.4); border-radius: 14px; padding: 10px 13px; margin-bottom: 12px; }
+    .weekbar .wk-emo { font-size: 22px; } .weekbar .wk-t { font-size: 13px; line-height: 1.3; }
+    .weekbar .wk-t b { color: #ffce54; }
+    .crowned { color: #ffce54; }
+    .ibtn { border: none; background: var(--card); color: var(--fg); border: 1px solid var(--line);
+      border-radius: 12px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -336,6 +352,7 @@
     <span class="logo">🎲</span>
     <h1>Табло Оракула<small>🌴 Клуб Сомнительных Решений</small></h1>
     <div class="upd" id="upd"></div>
+    <button class="ibtn press" onclick="openRules()" title="Как это работает">ℹ️</button>
   </div>
 
   <div class="view active" id="v-oracles"></div>
@@ -393,6 +410,54 @@
   <div class="ach-screen hide" id="ach-screen">
     <div class="ach-head"><h2>🏅 Награды и прогресс</h2><button class="x press" onclick="closeAch()">✕</button></div>
     <div id="ach-list"></div>
+  </div>
+
+  <div class="ach-screen hide" id="rules-screen">
+    <div class="ach-head"><h2>📖 Как это работает</h2><button class="x press" onclick="closeRules()">✕</button></div>
+    <div class="rlead">Оракул — это игра-предсказание на ЧМ-2026. Угадываешь счёт матчей,
+      копишь дублоны 🪙, лезешь в топ и забираешь звания. Всё засчитывается прямо здесь, в табло.</div>
+
+    <div class="rsec"><div class="rt">⚽ Прогноз</div><div class="rd">
+      Жми матч в «Матчах» и ставь счёт. <b>Точный счёт</b> — максимум дублонов,
+      угаданный <b>исход</b> (победа/ничья) — поменьше. Поставить можно до начала матча,
+      менять прогноз — сколько угодно, пока не дан свисток.</div></div>
+
+    <div class="rsec"><div class="rt">🃏 Джокер</div><div class="rd">
+      Вешается на твой прогноз и <b>удваивает</b> дублоны за этот матч. Их немного на турнир —
+      береги для матчей, в которых уверен.</div></div>
+
+    <div class="rsec"><div class="rt">🔥 Ва-банк</div><div class="rd">
+      Дерзкая ставка <b>раз за весь турнир</b>. Угадал точный счёт — большой куш (+20🪙),
+      <b>промахнулся — минус дублоны</b> (−10🪙). Ставится один раз и назад не отыграть — выбирай момент.</div></div>
+
+    <div class="rsec"><div class="rt">🛡 Страховка</div><div class="rd">
+      Подушка для прогноза: платишь немного дублонов заранее, и если <b>не угадал</b> —
+      часть возвращается. Угадал — страховка просто сгорает, как любая ставка. Спасает в нервных матчах.</div></div>
+
+    <div class="rsec"><div class="rt">🎟 Экспресс</div><div class="rd">
+      Связываешь <b>2–4 своих прогноза</b> в цепочку. Зашли <b>все</b> — жирный бонус.
+      Ошибся хоть в одном — цепочка рвётся. Риск выше, награда — тоже.</div></div>
+
+    <div class="rsec"><div class="rt">🏆 Чемпион</div><div class="rd">
+      Заранее называешь победителя турнира. Угадал — в финале капает крупный джекпот.
+      Чем раньше назвал, тем смелее.</div></div>
+
+    <div class="rsec"><div class="rt">🎁 Ежедневный бонус</div><div class="rd">
+      Заходи в табло каждый день и забирай дублоны. <b>Серия</b> заходов подряд увеличивает бонус.</div></div>
+
+    <div class="rsec"><div class="rt">🤝 Лагеря</div><div class="rd">
+      С первой ставки попадаешь в лагерь — 🧘 Дзен или 🎲 Хаос. Лагеря бьются между собой
+      суммой дублонов всех участников. Играешь за себя — и за своих.</div></div>
+
+    <div class="rsec rcrown"><div class="rt">👑🔮 Оракул недели</div><div class="rd">
+      Каждое воскресенье лучший прогнозист недели становится <b>Оракулом недели</b>. Это даёт:<br>
+      • 🔮 именной значок рядом с ником прямо в чате клуба;<br>
+      • 🎙 право на команду <b>/вердикт</b> — твоё слово выходит отдельным анонсом от лица клуба;<br>
+      • 🪙 разовый бонус и повышенный ежедневный бонус, пока носишь корону.<br>
+      Корона переходит к новому чемпиону каждую неделю — держать её можно только точными счетами.</div></div>
+
+    <div class="rlead" style="margin-top:4px">🪙 Дублоны — валюта клуба. Тратить не на что:
+      это чистый азарт, рейтинг и понты. Чем больше — тем громче ты Оракул. 🎯</div>
   </div>
 
   <div class="modal-bg" id="exp-bg">
@@ -507,6 +572,8 @@
       $('ach-screen').classList.remove('hide');
     }
     function closeAch() { $('ach-screen').classList.add('hide'); }
+    function openRules() { $('rules-screen').classList.remove('hide'); haptic(); }
+    function closeRules() { $('rules-screen').classList.add('hide'); }
     // 🎟 экспресс-билдер
     let expSel = [];
     function openExpress() {
@@ -576,11 +643,15 @@
     function renderOracles(d) {
       const list = d.oracles || [];
       let html = d.jackpot ? `<div class="banner">🏴‍☠️ Сундук дня: ${d.jackpot}🪙 — заберёт первый точный счёт!</div>` : '';
+      if (d.oracle_week && d.oracle_week.name) {
+        html += `<div class="weekbar" onclick="openRules()"><span class="wk-emo">👑</span>
+          <div class="wk-t">Оракул недели: <b>${esc(d.oracle_week.name)}</b><br>значок 🔮 в чате · /вердикт · бонусы — как заслужить? нажми ℹ️</div></div>`;
+      }
       if (!list.length) return html + '<div class="empty">Пока никто не сделал ставку 🤷<br>Будь первым — вкладка «Матчи».</div>';
       return html + podiumHtml(list) + list.map((o, i) => `
         <div class="card ${o.uid === myId ? 'me myrow' : (podium[i] || '')}">
           <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
-          <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}${o.delta > 0 ? `<span class="mv up">▲${o.delta}</span>` : o.delta < 0 ? `<span class="mv down">▼${-o.delta}</span>` : ''}
+          <div class="name ${o.crown ? 'crowned' : ''}">${o.crown ? '🔮 ' : ''}${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}${o.delta > 0 ? `<span class="mv up">▲${o.delta}</span>` : o.delta < 0 ? `<span class="mv down">▼${-o.delta}</span>` : ''}
             <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}${o.mom ? ' · ' + o.mom : ''}</div></div>
           <div class="coins">${o.coins}🪙</div></div>`).join('');
     }
@@ -731,7 +802,8 @@
         ${o.photo
           ? `<img class="big-ava" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
           : `<div class="big-ava" style="background:${o.color}">${o.totem || '🎲'}</div>`}
-        <div class="pname">${esc(o.name)} ${o.mom || ''}</div>
+        <div class="pname">${o.crown ? '🔮 ' : ''}${esc(o.name)} ${o.mom || ''}</div>
+        ${o.crown ? `<div class="pfac crowned">👑 Оракул недели — твоё слово: /вердикт</div>` : ''}
         ${o.title ? `<div class="pfac">🏷 «${esc(o.title)}»</div>` : ''}
         <div class="pfac">${o.faction ? 'фракция ' + esc(o.faction) : ''} · место #${idx + 1}</div>
         <div class="stats">
@@ -743,7 +815,8 @@
         ${dailyBlock(d)}
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div>
-          <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button></div>
+          <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button>
+          <button class="ach-open press" onclick="openRules()">📖 Как это работает →</button></div>
         ${historyBlock(d)}
         ${championBlock(d)}
         <button class="share press" onclick="shareCard()">🪪 Поделиться паспортом</button>
