@@ -342,6 +342,10 @@
     .weekbar .wk-emo { font-size: 22px; } .weekbar .wk-t { font-size: 13px; line-height: 1.3; }
     .weekbar .wk-t b { color: #ffce54; }
     .crowned { color: #ffce54; }
+    .hall-row { display: flex; align-items: center; gap: 9px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+    .hall-row:last-child { border-bottom: none; }
+    .hall-row .hr-m { width: 24px; text-align: center; } .hall-row .hr-n { flex: 1; font-weight: 600; }
+    .hall-row .hr-w { color: var(--gold); font-weight: 700; font-size: 12.5px; }
     .ibtn { border: none; background: var(--card); color: var(--fg); border: 1px solid var(--line);
       border-radius: 12px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
   </style>
@@ -452,9 +456,15 @@
     <div class="rsec rcrown"><div class="rt">👑🔮 Оракул недели</div><div class="rd">
       Каждое воскресенье лучший прогнозист недели становится <b>Оракулом недели</b>. Это даёт:<br>
       • 🔮 именной значок рядом с ником прямо в чате клуба;<br>
-      • 🎙 право на команду <b>/вердикт</b> — твоё слово выходит отдельным анонсом от лица клуба;<br>
+      • 🎙 право на команду <b>/вердикт</b> — твоё слово выходит отдельным анонсом, а чат голосует
+        🔥/🤡. Соберёшь достаточно 🔥 — ещё и бонус дублонов за харизму;<br>
       • 🪙 разовый бонус и повышенный ежедневный бонус, пока носишь корону.<br>
-      Корона переходит к новому чемпиону каждую неделю — держать её можно только точными счетами.</div></div>
+      Корона переходит к новому чемпиону каждую неделю — держать её можно только точными счетами.
+      Сколько недель кто правил — видно в <b>Зале славы Оракулов</b> (вкладка «Топ») и по команде <b>/короли</b>.</div></div>
+
+    <div class="rsec"><div class="rt">⚔️ Дерби недели</div><div class="rd">
+      По воскресеньям бот объявляет <b>главный матч ближайшей недели</b>. Лагеря 🧘 Дзен и 🎲 Хаос
+      бьются прогнозами — чей точнее, того и слава. Лишний повод не пропустить топ-матч.</div></div>
 
     <div class="rlead" style="margin-top:4px">🪙 Дублоны — валюта клуба. Тратить не на что:
       это чистый азарт, рейтинг и понты. Чем больше — тем громче ты Оракул. 🎯</div>
@@ -653,7 +663,16 @@
           <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
           <div class="name ${o.crown ? 'crowned' : ''}">${o.crown ? '🔮 ' : ''}${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}${o.delta > 0 ? `<span class="mv up">▲${o.delta}</span>` : o.delta < 0 ? `<span class="mv down">▼${-o.delta}</span>` : ''}
             <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}${o.mom ? ' · ' + o.mom : ''}</div></div>
-          <div class="coins">${o.coins}🪙</div></div>`).join('');
+          <div class="coins">${o.coins}🪙</div></div>`).join('') + hallHtml(d);
+    }
+    function hallHtml(d) {
+      const h = (d.crown_hall || []).filter(r => r.weeks > 0);
+      if (!h.length) return '';
+      const med = ['🥇', '🥈', '🥉'];
+      return `<div class="block" style="margin-top:14px"><h3>👑 Зал славы Оракулов</h3>` +
+        h.map((r, i) => `<div class="hall-row"><span class="hr-m">${med[i] || '👑'}</span>
+          <span class="hr-n ${r.uid === myId ? 'crowned' : ''}">${esc(r.name)}</span>
+          <span class="hr-w">${r.weeks} нед.</span></div>`).join('') + `</div>`;
     }
     let TODAY = [];
     function consensus(m) {
