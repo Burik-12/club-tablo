@@ -196,6 +196,55 @@
     @keyframes cel { 0% { transform: scale(.3) rotate(-25deg); opacity: 0; }
       35% { transform: scale(1.25) rotate(8deg); opacity: 1; }
       70% { transform: scale(1) rotate(0); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+    /* 🎉 конфетти */
+    .confetti { position: fixed; top: -12px; width: 9px; height: 9px; z-index: 59; border-radius: 2px;
+      pointer-events: none; animation: fall linear forwards; }
+    @keyframes fall { to { transform: translateY(102vh) rotate(720deg); opacity: .9; } }
+    /* 🏆 подиум топ-3 */
+    .podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin: 4px 0 16px; }
+    .pod { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 30%; }
+    .pod .pava { width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+      display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2.5px solid; }
+    .pod .pn { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.1; max-width: 100%;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pod .pc { font-size: 12px; font-weight: 800; color: var(--gold); }
+    .pod .stand { width: 100%; border-radius: 10px 10px 0 0; display: flex; align-items: flex-start;
+      justify-content: center; padding-top: 6px; font-size: 18px; font-weight: 800; color: #0c0e16; }
+    .pod.p1 .pava { border-color: var(--gold); box-shadow: 0 0 16px rgba(255,206,84,.5); }
+    .pod.p1 .stand { height: 64px; background: linear-gradient(180deg, #ffce54, #d99e1e); }
+    .pod.p2 .pava { border-color: #c7cfde; } .pod.p2 .stand { height: 48px; background: linear-gradient(180deg, #c7cfde, #8b93a7); }
+    .pod.p3 .pava { border-color: #cd7f50; } .pod.p3 .stand { height: 38px; background: linear-gradient(180deg, #cd7f50, #9c5a32); }
+    /* кольцо аватарки по фракции */
+    .ava.zen, img.ava.zen { box-shadow: 0 0 0 2px #3ddc97, inset 0 0 0 2px rgba(255,255,255,.16); }
+    .ava.chaos, img.ava.chaos { box-shadow: 0 0 0 2px #ff8e3c, inset 0 0 0 2px rgba(255,255,255,.16); }
+    /* ✨ скелетон-загрузка */
+    .sk { background: var(--card); border: 1px solid var(--line); border-radius: 16px; height: 62px;
+      margin-bottom: 8px; position: relative; overflow: hidden; }
+    .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+      animation: shimmer 1.3s infinite; }
+    @keyframes shimmer { to { transform: translateX(100%); } }
+    /* 🤝 канат фракций */
+    .tug { margin: 6px 0 4px; }
+    .tug-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .tug-bar { height: 26px; border-radius: 13px; overflow: hidden; display: flex; border: 1px solid var(--line); }
+    .tug-bar .z { background: linear-gradient(90deg, #2bbf86, #3ddc97); }
+    .tug-bar .c { background: linear-gradient(90deg, #ff8e3c, #ff6b2c); margin-left: auto; }
+    .tug-bar span { height: 100%; transition: width .7s ease; display: flex; align-items: center;
+      font-size: 11px; font-weight: 800; color: #0c0e16; }
+    .tug-bar .z span, .tug-bar .z { justify-content: flex-start; }
+    .tug-mid { width: 3px; background: #fff; opacity: .5; }
+    /* индикатор активной вкладки */
+    .nav button.active::after { content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent); margin-top: 1px; box-shadow: 0 0 6px var(--accent); }
+    /* липкая «моя строка» в топе */
+    .myrow { position: sticky; top: -2px; z-index: 5; }
+    /* тост гола */
+    .gtoast { position: fixed; left: 12px; right: 12px; top: 12px; z-index: 58; background: linear-gradient(135deg, var(--live), #d6394a);
+      color: #fff; padding: 12px 14px; border-radius: 14px; font-weight: 700; box-shadow: 0 8px 24px rgba(255,92,108,.4);
+      animation: gtin .3s ease, gtout .4s ease 2.6s forwards; }
+    @keyframes gtin { from { transform: translateY(-120%); } to { transform: none; } }
+    @keyframes gtout { to { transform: translateY(-140%); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -270,13 +319,65 @@
     const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍"];
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    function facCls(o) {   // класс кольца аватарки по фракции
+      const f = (o && o.faction) || '';
+      if (f.indexOf('Дзен') >= 0) return ' zen';
+      if (f.indexOf('Хаос') >= 0) return ' chaos';
+      return '';
+    }
     const ava = (o) => o.photo
-      ? `<img class="ava" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
-      : `<div class="ava" style="background:${o.color}">${o.totem || '🎲'}</div>`;
+      ? `<img class="ava${facCls(o)}" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
+      : `<div class="ava${facCls(o)}" style="background:${o.color}">${o.totem || '🎲'}</div>`;
     function avaErr(img) {   // фото не загрузилось → откатываемся на тотем
       const d = document.createElement('div');
       d.className = img.className; d.style.background = img.dataset.c; d.textContent = img.dataset.t;
       img.replaceWith(d);
+    }
+    function confetti() {
+      const colors = ['#7c5cff', '#22d3ee', '#ffce54', '#ff8e3c', '#3ddc97'];
+      for (let i = 0; i < 26; i++) {
+        const c = document.createElement('div'); c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.background = colors[i % colors.length];
+        c.style.animationDuration = (1.5 + Math.random() * 1.4) + 's';
+        document.body.appendChild(c); setTimeout(() => c.remove(), 3000);
+      }
+    }
+    function countUp(el, to) {
+      if (!el) return; const dur = 600, t0 = performance.now();
+      (function tick(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))) + '🪙';
+        if (k < 1) requestAnimationFrame(tick);
+      })(t0);
+    }
+    const ACH_DESC = {
+      '🥅': 'Гол тура — твой прогноз признали лучшим',
+      '🧙': 'Маг — серия точных прогнозов',
+      '🐴': 'Тёмная лошадка — угадал сенсацию против толпы',
+      '💩': 'Сантехник Ванга — антирекорд, бывает у каждого',
+      '🎟': 'Экспрессист — собрал и зашёл экспресс',
+      '🅰️': 'Ва-банк — рискнул всем и не зря',
+      '🎯': 'Снайпер — много точных счетов',
+      '🌍': 'Глобус — ставил на 12+ разных сборных',
+    };
+    function badgeInfo(e) { popup(e + ' Награда', ACH_DESC[e] || 'Достижение оракула'); }
+    let prevScores = {}, scoresSeen = false;
+    function checkGoals(d) {
+      (d.today || []).forEach(m => {
+        if (!m.score) return;
+        const prev = prevScores[m.id];
+        const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
+        if (scoresSeen && live && prev && m.score !== prev) goalToast(m);
+        prevScores[m.id] = m.score;
+      });
+      scoresSeen = true;
+    }
+    function goalToast(m) {
+      const t = document.createElement('div'); t.className = 'gtoast';
+      t.textContent = `⚽ ГОЛ! ${m.home_flag} ${m.home} ${m.score} ${m.away} ${m.away_flag}`;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 3100);
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
     }
     function ago(ts) { const d = Math.max(0, Math.floor(Date.now()/1000 - ts));
       if (d < 60) return 'только что'; if (d < 3600) return Math.floor(d/60)+' мин'; return Math.floor(d/3600)+' ч'; }
@@ -294,12 +395,22 @@
       return { label, cls: s < 1800 ? 'urgent' : s < 7200 ? 'soon' : '' };
     }
 
+    function podiumHtml(list) {
+      if (list.length < 2) return '';
+      return '<div class="podium">' + [1, 0, 2].map(i => {
+        const o = list[i]; if (!o) return '';
+        const a = o.photo
+          ? `<img class="pava" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
+          : `<div class="pava" style="background:${o.color}">${o.totem || '🎲'}</div>`;
+        return `<div class="pod p${i + 1}">${a}<div class="pn">${esc(o.name)}</div><div class="pc">${o.coins}🪙</div><div class="stand">${i + 1}</div></div>`;
+      }).join('') + '</div>';
+    }
     function renderOracles(d) {
       const list = d.oracles || [];
       let html = d.jackpot ? `<div class="banner">🏴‍☠️ Сундук дня: ${d.jackpot}🪙 — заберёт первый точный счёт!</div>` : '';
       if (!list.length) return html + '<div class="empty">Пока никто не сделал ставку 🤷<br>Будь первым — вкладка «Матчи».</div>';
-      return html + list.map((o, i) => `
-        <div class="card ${o.uid === myId ? 'me' : (podium[i] || '')}">
+      return html + podiumHtml(list) + list.map((o, i) => `
+        <div class="card ${o.uid === myId ? 'me myrow' : (podium[i] || '')}">
           <div class="pos">${medals[i] || (i + 1)}</div>${ava(o)}
           <div class="name">${esc(o.name)}${o.uid === myId ? '<span class="me-tag">ты</span>' : ''}
             <div class="sub">${o.exact}🎯 · ${o.props || 0}✨${o.streak ? ' · ' + o.streak + '🔥' : ''}${o.mom ? ' · ' + o.mom : ''}</div></div>
@@ -413,11 +524,23 @@
       if (!list.length) return '<div class="empty">Судовой журнал пуст 📜<br>Сюда лягут голы, сенсации и рекорды.</div>';
       return list.map(f => `<div class="feed-item"><span>${esc(f.text)}</span><span class="ft" style="margin-left:auto">${ago(f.ts)}</span></div>`).join('');
     }
+    function tugHtml(list) {
+      if (list.length < 2) return '';
+      const zen = list.find(f => (f.name || '').indexOf('Дзен') >= 0) || list[0];
+      const cha = list.find(f => (f.name || '').indexOf('Хаос') >= 0) || list[1];
+      if (zen === cha) return '';
+      const z = zen.coins || 0, c = cha.coins || 0, t = Math.max(1, z + c);
+      const zp = Math.round(z / t * 100), cp = 100 - zp;
+      return `<div class="tug">
+        <div class="tug-head"><span style="color:#3ddc97">${zen.emoji} ${esc(zen.name)}</span><span style="color:#ff8e3c">${esc(cha.name)} ${cha.emoji}</span></div>
+        <div class="tug-bar"><span class="z" style="width:${zp}%">${z ? '&nbsp;' + z + '🪙' : ''}</span><span class="c" style="width:${cp}%">${c ? c + '🪙&nbsp;' : ''}</span></div>
+      </div>`;
+    }
     function renderFactions(d) {
       const list = d.factions || [];
       if (!list.length || list.every(f => !f.coins)) return '<div class="empty">Фракции ещё не набрали очков 🧘<br>Поставь прогноз — попадёшь в лагерь.</div>';
       const max = Math.max(1, ...list.map(f => f.coins)); const palette = ['#7c5cff', '#ff8e3c'];
-      return list.map((f, i) => `<div class="card faction"><div class="top">
+      return tugHtml(list) + list.map((f, i) => `<div class="card faction"><div class="top">
           <div class="fname">${f.emoji} ${esc(f.name)}</div>
           <div class="coins" style="margin-left:auto;color:var(--fg)">${f.coins}🪙 · ${f.members}👥</div></div>
           ${f.captain ? `<div class="sub" style="margin-top:7px;color:var(--hint)">👑 капитан: ${esc(f.captain)}</div>` : ''}
@@ -430,7 +553,7 @@
       if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Поставь прогноз на вкладке «Матчи» — и появишься.</div>' + championBlock(d); }
       const o = list[idx]; ME = o; ME.pos = idx + 1;
       const have = new Set((o.ach || []).map(a => a.emoji));
-      const badges = ALL_ACH.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}">${e}</span>`).join('');
+      const badges = ALL_ACH.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}" onclick="badgeInfo('${e}')">${e}</span>`).join('');
       return `<div class="profile">
         ${o.photo
           ? `<img class="big-ava" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
@@ -439,7 +562,7 @@
         ${o.title ? `<div class="pfac">🏷 «${esc(o.title)}»</div>` : ''}
         <div class="pfac">${o.faction ? 'фракция ' + esc(o.faction) : ''} · место #${idx + 1}</div>
         <div class="stats">
-          <div class="stat"><div class="v" style="color:var(--gold)">${o.coins}🪙</div><div class="l">дублонов</div></div>
+          <div class="stat"><div class="v" id="me-coins" style="color:var(--gold)">${o.coins}🪙</div><div class="l">дублонов</div></div>
           <div class="stat"><div class="v">#${idx + 1}</div><div class="l">в рейтинге</div></div>
           <div class="stat"><div class="v">${o.exact}🎯</div><div class="l">точных</div></div>
           <div class="stat"><div class="v">${o.streak || 0}🔥</div><div class="l">рекорд серии</div></div>
@@ -504,7 +627,7 @@
         body: JSON.stringify(payload) })
         .then(r => r.json()).then(res => {
           if (res.ok) {
-            haptic('ok'); if (cel) celebrate(cel);
+            haptic('ok'); if (cel) { celebrate(cel); confetti(); }
             popup(okTitle, res.msg); if (res.state) { DATA = res.state; renderAll(); }
             $('modal-bg').classList.remove('open'); $('champ-bg').classList.remove('open');
           } else { popup('Не вышло', res.error || res.msg || 'Ошибка'); }
@@ -567,6 +690,7 @@
       document.querySelectorAll('.wlink').forEach(wl => wl.onclick = (e) => {
         e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
       if (active === 'me' && ME) drawSpark(ME.form);
+      checkGoals(DATA);   // ⚽ тост, если по live-матчу забили с прошлого обновления
     }
     document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
       haptic();
@@ -575,8 +699,9 @@
       b.classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       $('v-' + active).classList.add('active');
-      if (active === 'me' && ME) drawSpark(ME.form);
+      if (active === 'me' && ME) { drawSpark(ME.form); countUp($('me-coins'), ME.coins); }
     });
+    function skeleton() { return Array(6).fill('<div class="sk"></div>').join(''); }
     function load() {
       const init = (tg && tg.initData) ? tg.initData : '';
       fetch(api('api/state'), { headers: init ? { 'X-Init-Data': init } : {} })
@@ -586,6 +711,7 @@
           .then(d => { DATA = d; renderAll(); })
           .catch(() => { if (!DATA) $('v-oracles').innerHTML = '<div class="empty">Данные пока не выгружены</div>'; }));
     }
+    $('v-oracles').innerHTML = skeleton();   // ✨ мерцание до первой загрузки
     load();
     setInterval(load, 30000);   // 🔴 лайв-автообновление каждые 30 c
   </script>
