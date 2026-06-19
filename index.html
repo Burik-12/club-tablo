@@ -259,6 +259,39 @@
       animation: gtin .3s ease, gtout .4s ease 2.6s forwards; }
     @keyframes gtin { from { transform: translateY(-120%); } to { transform: none; } }
     @keyframes gtout { to { transform: translateY(-140%); opacity: 0; } }
+    /* 🎁 ежедневный бонус */
+    .daily { width: 100%; border: none; border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 800;
+      cursor: pointer; margin: 14px 0 2px; color: #2a1c00;
+      background: linear-gradient(135deg, #ffce54, #ff8e3c); box-shadow: 0 6px 18px rgba(255,180,60,.35);
+      animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 50% { transform: scale(1.015); box-shadow: 0 8px 24px rgba(255,180,60,.5); } }
+    .daily-done { text-align: center; font-size: 13px; color: var(--hint); margin: 14px 0 2px; }
+    /* 🔴 точка-бейдж на вкладке */
+    .nav button { position: relative; }
+    .ndot { position: absolute; top: 5px; right: 50%; margin-right: -18px; min-width: 16px; height: 16px;
+      padding: 0 4px; border-radius: 9px; background: var(--live); color: #fff; font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--bg); }
+    /* 🎬 экран-приветствие */
+    .welcome { position: fixed; inset: 0; z-index: 80; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 24px;
+      text-align: center; gap: 14px;
+      background-image: radial-gradient(700px 400px at 50% 0%, rgba(124,92,255,.25), transparent 60%); }
+    .welcome.hide { display: none; }
+    .welcome .wlogo { font-size: 64px; filter: drop-shadow(0 0 16px rgba(124,92,255,.7)); }
+    .welcome h2 { font-size: 24px; margin: 0; font-weight: 800; }
+    .welcome ul { list-style: none; padding: 0; margin: 6px 0; text-align: left; max-width: 320px; font-size: 15px; line-height: 1.9; }
+    .welcome .go { max-width: 320px; margin-top: 10px; }
+    /* 🏟 модалка матча */
+    .mdetail { font-size: 14px; }
+    .mdetail .row { display: flex; justify-content: space-between; padding: 9px 2px; border-bottom: 1px solid var(--line); }
+    .mdetail .row:last-of-type { border-bottom: none; }
+    .mdetail .k { color: var(--hint); }
+    /* 🌗 скин плей-офф */
+    body.playoff { background:
+        radial-gradient(820px 440px at 50% -12%, rgba(255,206,84,.18), transparent 60%),
+        radial-gradient(680px 400px at 102% 2%, rgba(124,92,255,.16), transparent 58%),
+        radial-gradient(900px 540px at 0% 104%, rgba(255,142,60,.16), transparent 60%), var(--bg); }
+    body.playoff .head h1 { background: linear-gradient(90deg, #fff, #ffce54); -webkit-background-clip: text; background-clip: text; }
   </style>
 </head>
 <body>
@@ -277,7 +310,7 @@
 
   <nav class="nav">
     <button class="active" data-v="oracles"><span class="ic">🏆</span>Топ</button>
-    <button data-v="today"><span class="ic">⚽</span>Матчи</button>
+    <button data-v="today"><span class="ic">⚽</span>Матчи<span class="ndot" id="badge-today" hidden></span></button>
     <button data-v="bracket"><span class="ic">🗺</span>Сетка</button>
     <button data-v="feed"><span class="ic">📜</span>Лента</button>
     <button data-v="factions"><span class="ic">🤝</span>Лагеря</button>
@@ -301,6 +334,22 @@
       <button class="go press" onclick="sendBet()">🎲 Поставить прогноз</button>
       <div class="hint-sm">Ставка засчитается сразу — прямо здесь.</div>
     </div>
+  </div>
+
+  <div class="welcome hide" id="welcome">
+    <div class="wlogo">🎲</div>
+    <h2>Добро пожаловать в Табло Оракула!</h2>
+    <ul>
+      <li>⚽ Угадывай счёт матчей ЧМ-2026</li>
+      <li>🪙 Получай дублоны — точный счёт даёт больше всего</li>
+      <li>🏆 Лезь в топ, бери звания и фишки: джокер, чемпион, ва-банк</li>
+      <li>🎭 Своя карточка, фракции, аватарка из Telegram</li>
+    </ul>
+    <button class="go press" onclick="closeWelcome()">🎲 Поехали!</button>
+  </div>
+
+  <div class="modal-bg" id="match-bg">
+    <div class="modal"><h2 id="md-title"></h2><div id="md-body" class="mdetail"></div></div>
   </div>
 
   <div class="modal-bg" id="champ-bg">
@@ -513,7 +562,7 @@
             + jbtn + `<button class="bet-btn press" onclick="openBet(${i})">${mb ? '✏️' : '＋'}</button></div>`;
         }
         return `<div class="match">
-          <div class="sb">
+          <div class="sb" onclick="openMatch(${i})">
             <div class="sb-team"><span class="sb-flag">${m.home_flag}</span><span class="sb-name">${esc(m.home)}</span></div>
             <div class="sb-mid">${mid}</div>
             <div class="sb-team"><span class="sb-flag">${m.away_flag}</span><span class="sb-name">${esc(m.away)}</span></div>
@@ -590,6 +639,7 @@
           <div class="stat"><div class="v">${o.exact}🎯</div><div class="l">точных</div></div>
           <div class="stat"><div class="v">${o.streak || 0}🔥</div><div class="l">рекорд серии</div></div>
         </div>
+        ${dailyBlock(d)}
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div></div>
         ${historyBlock(d)}
@@ -734,6 +784,45 @@
       }).join('');
       return `<div class="block"><h3>📜 История ставок</h3>${rows}</div>`;
     }
+    function dailyBlock(d) {
+      const me = d.me || {};
+      if (me.daily_claimed) return `<div class="daily-done">🎁 Бонус дня забран · серия ${me.daily_streak || 0}🔥</div>`;
+      return `<button class="daily press" onclick="claimDaily()">🎁 Забрать бонус дня · серия ${me.daily_streak || 0}🔥</button>`;
+    }
+    function claimDaily() { apiAction('api/daily', {}, '🎁 Бонус дня', '🪙'); }
+    function closeWelcome() { try { localStorage.setItem('kubik_seen', '1'); } catch (e) {} $('welcome').classList.add('hide'); }
+    function maybeWelcome() { let seen; try { seen = localStorage.getItem('kubik_seen'); } catch (e) { seen = 1; } if (!seen) $('welcome').classList.remove('hide'); }
+    function updateNavBadges(d) {
+      const me = d.me || {}; const bets = me.bets || {};
+      const n = (d.today || []).filter(m => m.open && !bets[m.id]).length;
+      const el = $('badge-today'); if (!el) return;
+      if (n > 0) { el.textContent = n; el.hidden = false; } else { el.hidden = true; }
+    }
+    function openMatch(i) {
+      const m = TODAY[i], d = DATA; if (!m) return;
+      $('md-title').textContent = `${m.home_flag} ${m.home} — ${m.away} ${m.away_flag}`;
+      const mb = (d.me && d.me.bets && d.me.bets[m.id]) || null;
+      const sp = m.split || { h: 0, d: 0, a: 0, total: 0 };
+      const t = sp.total || 0;
+      const pct = (x) => t ? Math.round(x / t * 100) + '%' : '—';
+      const cd = untilKick(m.ts);
+      const rows = [];
+      rows.push(['Когда', m.score ? (m.status === 'FINISHED' ? 'завершён' : 'идёт') : (m.day === 0 ? m.time : m.date + ' ' + m.time)]);
+      if (m.score) rows.push(['Счёт', m.score]);
+      if (cd && !m.score) rows.push(['До закрытия', '⏳ ' + cd.label]);
+      if (mb) rows.push(['Твой прогноз', mb]);
+      rows.push(['Чат за П1', `${pct(sp.h)} (${sp.h})`]);
+      rows.push(['Чат за ничью', `${pct(sp.d)} (${sp.d})`]);
+      rows.push(['Чат за П2', `${pct(sp.a)} (${sp.a})`]);
+      let html = rows.map(r => `<div class="row"><span class="k">${r[0]}</span><span>${r[1]}</span></div>`).join('');
+      if (!m.score && m.status !== 'FINISHED')
+        html += `<button class="go press" style="margin-top:14px" onclick="$('match-bg').classList.remove('open');openBet(${i})">${mb ? '✏️ Изменить прогноз' : '🎲 Поставить прогноз'}</button>`;
+      (d.watch || []).forEach(w => { html += `<a class="watch wlink" style="margin-top:8px" href="${w.url}">${esc(w.label)}</a>`; });
+      $('md-body').innerHTML = html;
+      document.querySelectorAll('#md-body .wlink').forEach(wl => wl.onclick = (e) => {
+        e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
+      $('match-bg').classList.add('open');
+    }
     function championBlock(d) {
       const c = d.me && d.me.champion;
       if (!d.champion_open) return c ? `<div class="block"><h3>🏆 Чемпион</h3><div class="pfac">${c.flag} ${esc(c.ru)} · окно закрыто</div></div>` : '';
@@ -759,6 +848,7 @@
       apiAction('api/predict', { match_id: m.id, home: hs, away: as }, '🎲 Ставка принята', '🪙');
     }
     $('modal-bg').onclick = (e) => { if (e.target.id === 'modal-bg') e.target.classList.remove('open'); };
+    $('match-bg').onclick = (e) => { if (e.target.id === 'match-bg') e.target.classList.remove('open'); };
 
     let DATA = null, active = 'oracles';
     function renderAll() {
@@ -774,6 +864,8 @@
         e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
       if (active === 'me' && ME) drawSpark(ME.form);
       checkGoals(DATA);   // ⚽ тост, если по live-матчу забили с прошлого обновления
+      updateNavBadges(DATA);
+      document.body.classList.toggle('playoff', DATA.phase === 'playoff');
     }
     document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
       haptic();
@@ -795,6 +887,7 @@
           .catch(() => { if (!DATA) $('v-oracles').innerHTML = '<div class="empty">Данные пока не выгружены</div>'; }));
     }
     $('v-oracles').innerHTML = skeleton();   // ✨ мерцание до первой загрузки
+    maybeWelcome();                          // 🎬 приветствие при первом входе
     load();
     setInterval(load, 30000);   // 🔴 лайв-автообновление каждые 30 c
   </script>
