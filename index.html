@@ -495,6 +495,57 @@
     .ava.fr-sniper, img.ava.fr-sniper, .big-ava.fr-sniper { outline: 2.5px solid var(--accent2); outline-offset: 2px; }
     .ava.fr-fire, img.ava.fr-fire, .big-ava.fr-fire { outline: 2.5px solid var(--orange); outline-offset: 2px; }
     .big-ava.fr-crown, .big-ava.fr-sniper, .big-ava.fr-fire { outline-width: 3px; outline-offset: 3px; }
+    /* ── 🗺 турнирная лесенка ── */
+    .bracket-tree { display: flex; overflow-x: auto; padding: 2px 0 10px; -webkit-overflow-scrolling: touch; }
+    .bracket-tree::-webkit-scrollbar { display: none; }
+    .bcol { flex: 0 0 auto; min-width: 156px; display: flex; flex-direction: column; justify-content: space-around;
+      gap: 10px; padding-right: 16px; position: relative; }
+    .bcol-h { font-size: 11px; color: var(--accent2); text-transform: uppercase; letter-spacing: .6px;
+      font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .bnode { background: var(--card); border: 1px solid var(--line); border-radius: 11px; padding: 7px 9px;
+      font-size: 12px; position: relative; }
+    .bnode.fin { border-color: rgba(61,220,151,.3); }
+    .bnode .bteam { display: flex; align-items: center; gap: 5px; padding: 2px 0; line-height: 1.2; }
+    .bnode .bteam .bnm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bnode .bteam.bwin .bnm { color: var(--green); font-weight: 700; }
+    .bnode .bteam .bsc { color: var(--hint); font-weight: 700; }
+    .bnode .bteam.bwin .bsc { color: var(--green); }
+    .bcol:not(:last-child) .bnode::after { content: ''; position: absolute; right: -16px; top: 50%;
+      width: 16px; height: 2px; background: var(--line); }
+    .bnode.adv::after { background: linear-gradient(90deg, var(--green), transparent); }
+    /* ── ⚡️ молния-стрик ── */
+    .ava-wrap { position: relative; display: inline-block; margin: 0 auto 10px; }
+    .big-ava.charged { animation: charge 1.3s ease-in-out infinite; }
+    @keyframes charge { 0%,100% { box-shadow: inset 0 0 0 3px rgba(255,255,255,.18), 0 0 calc(14px + var(--ch,0)*26px) rgba(34,211,238,calc(.3 + var(--ch,0)*.5)); }
+      50% { box-shadow: inset 0 0 0 3px rgba(255,255,255,.18), 0 0 calc(22px + var(--ch,0)*34px) rgba(124,92,255,calc(.4 + var(--ch,0)*.5)); } }
+    .bolt { position: absolute; font-size: 20px; pointer-events: none; animation: boltflash 1.1s ease-in-out infinite; }
+    @keyframes boltflash { 0%,100% { opacity: 0; transform: scale(.7); } 40% { opacity: 1; transform: scale(1.1); } }
+    /* ── 🎰 барабан кубика ── */
+    .num.spin { filter: blur(.5px); color: var(--accent2); }
+    /* ── 📅 календарь-стрик ── */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 4px; }
+    .cal-cell { aspect-ratio: 1; border-radius: 6px; background: rgba(255,255,255,.05); display: flex;
+      align-items: center; justify-content: center; font-size: 10px; color: var(--hint); }
+    .cal-cell.on { background: linear-gradient(135deg, var(--green), #2bbf86); color: #06281a; font-weight: 800;
+      box-shadow: 0 0 8px rgba(61,220,151,.4); }
+    .cal-cell.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .cal-foot { font-size: 12px; color: var(--hint); margin-top: 9px; }
+    .cal-foot b { color: var(--green); }
+    /* ── 🌐 SVG-флаги ── */
+    .svgflag { display: inline-block; vertical-align: middle; border-radius: 3px; object-fit: cover;
+      box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+    .svgflag.sb { width: 40px; height: 27px; }
+    .match.arena .svgflag.sb { width: 50px; height: 34px; }
+    .svgflag.card { width: 34px; height: 23px; }
+    .svgflag.bk { width: 18px; height: 12px; }
+    /* ── 🏆 экран финала турнира ── */
+    .final-hero { text-align: center; padding: 20px 0 6px; }
+    .final-hero .fcup { font-size: 64px; filter: drop-shadow(0 0 18px rgba(255,206,84,.7)); animation: crownfloat 2.6s ease-in-out infinite; }
+    .final-hero .fchamp-flag { font-size: 72px; margin: 10px 0 2px; }
+    .final-hero .fchamp-flag .svgflag { width: 108px; height: 72px; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+    .final-hero .fchamp { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #ffce54, #fff, #ffce54);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .final-hero .fsub { font-size: 13px; color: var(--hint); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -573,6 +624,12 @@
     <div class="ach-head"><h2>🎬 Твой ЧМ-2026</h2><button class="x press" onclick="closeWrapped()">✕</button></div>
     <div id="wrapped-body"></div>
     <button class="share press" onclick="shareWrapped()" style="margin-top:14px">📤 Поделиться итогами</button>
+  </div>
+
+  <div class="ach-screen hide" id="final-screen">
+    <div class="ach-head"><h2>🏆 Финал ЧМ-2026</h2><button class="x press" onclick="closeFinal()">✕</button></div>
+    <div id="final-body"></div>
+    <button class="share press" onclick="openWrapped()" style="margin-top:16px">🎬 Мои итоги турнира →</button>
   </div>
 
   <div class="ach-screen hide" id="rules-screen">
@@ -693,6 +750,23 @@
       d.className = img.className; d.style.background = img.dataset.c; d.textContent = img.dataset.t;
       img.replaceWith(d);
     }
+    // 🌐 ISO-код страны из флаг-эмодзи (две regional-indicator буквы) или null
+    function isoFromFlag(f) {
+      try {
+        const cps = [...String(f)]; if (cps.length < 2) return null;
+        const a = cps[0].codePointAt(0) - 0x1F1E6, b = cps[1].codePointAt(0) - 0x1F1E6;
+        if (a < 0 || a > 25 || b < 0 || b > 25) return null;
+        return String.fromCharCode(65 + a, 65 + b).toLowerCase();
+      } catch (e) { return null; }
+    }
+    // 🌐 чёткий флаг: PNG с flagcdn, при сбое — системный эмодзи. sz: 'sb'|'card'|'bk'
+    function flag(f, sz) {
+      const cc = isoFromFlag(f);
+      if (!cc) return f;   // субфлаги (Англия/Шотландия) и пр. — оставляем эмодзи
+      const w = sz === 'sb' ? 'w80' : sz === 'card' ? 'w80' : 'w40';
+      return `<img class="svgflag ${sz || ''}" src="https://flagcdn.com/${w}/${cc}.png" alt=""
+        onerror="this.replaceWith(document.createTextNode('${f}'))">`;
+    }
     function confetti() {
       const colors = ['#7c5cff', '#22d3ee', '#ffce54', '#ff8e3c', '#3ddc97'];
       for (let i = 0; i < 26; i++) {
@@ -789,6 +863,23 @@
       $('wrapped-screen').classList.remove('hide'); haptic();
     }
     function closeWrapped() { $('wrapped-screen').classList.add('hide'); }
+    let finalShown = false;
+    function openFinal() {
+      const d = DATA, f = d.final; if (!f) return; const me = d.me || {};
+      $('final-body').innerHTML = `<div class="final-hero">
+          <div class="fcup">🏆</div>
+          <div class="fchamp-flag">${flag(f.flag, 'sb')}</div>
+          <div class="fchamp">${esc(f.ru)}</div>
+          <div class="fsub">Чемпион мира 2026</div>
+        </div>` +
+        (me.pos ? `<div class="wstat"><span class="we">🏅</span><span class="wl">Твоё место в клубе</span><span class="wv">#${me.pos}</span></div>` : '') +
+        (me.coins != null ? `<div class="wstat"><span class="we">🪙</span><span class="wl">Дублонов за турнир</span><span class="wv">${me.coins}</span></div>` : '') +
+        (me.exact != null ? `<div class="wstat"><span class="we">🎯</span><span class="wl">Точных счётов</span><span class="wv">${me.exact}</span></div>` : '') +
+        `<div class="wfoot">Турнир завершён. Спасибо, что был с клубом! 🌴🏴‍☠️</div>`;
+      $('final-screen').classList.remove('hide');
+      confetti(); celebrate('🏆'); setTimeout(confetti, 700); setTimeout(confetti, 1500);
+    }
+    function closeFinal() { try { localStorage.setItem('kubik_final_seen', '1'); } catch (e) {} $('final-screen').classList.add('hide'); }
     function openAlbum() {
       const d = DATA, teams = d.teams || [];
       const got = new Set((d.me && d.me.collected) || []);
@@ -809,7 +900,7 @@
         if (c >= 4) cls += ' holo'; else if (c >= 2) cls += ' shiny';
         if (have && t.en === favEn) cls += ' fav';
         const lvl = c >= 4 ? '🌈 фольга' : c >= 2 ? '✨ блеск' : '';
-        return `<div class="acard ${cls}"><div class="afl">${t.flag}</div><div class="anm">${esc(t.ru)}</div>${lvl ? `<div class="alvl">${lvl}</div>` : ''}</div>`;
+        return `<div class="acard ${cls}"><div class="afl">${flag(t.flag, 'card')}</div><div class="anm">${esc(t.ru)}</div>${lvl ? `<div class="alvl">${lvl}</div>` : ''}</div>`;
       }).join('');
       $('album-screen').classList.remove('hide'); haptic();
     }
@@ -1077,9 +1168,9 @@
         }
         return `<div class="match${live ? ' arena' : ''}">
           <div class="sb" onclick="openMatch(${i})">
-            <div class="sb-team"><span class="sb-flag">${m.home_flag}</span><span class="sb-name">${esc(m.home)}</span></div>
+            <div class="sb-team"><span class="sb-flag">${flag(m.home_flag, 'sb')}</span><span class="sb-name">${esc(m.home)}</span></div>
             <div class="sb-mid">${mid}</div>
-            <div class="sb-team"><span class="sb-flag">${m.away_flag}</span><span class="sb-name">${esc(m.away)}</span></div>
+            <div class="sb-team"><span class="sb-flag">${flag(m.away_flag, 'sb')}</span><span class="sb-name">${esc(m.away)}</span></div>
           </div>${ctl}${consensus(m)}${azartRow(m, d)}</div>`;
       }).join('');
       const empty = cards.trim() ? '' :
@@ -1100,8 +1191,24 @@
       if (!list.length) return scorers + (scorers ? '' : '<div class="empty">Плей-офф ещё не начался 🗺<br>Сетка появится после групп.</div>');
       const byStage = {};
       list.forEach(m => { (byStage[m.stage] = byStage[m.stage] || []).push(m); });
-      return scorers + Object.keys(byStage).map(st => `<div class="stage-h">${esc(st)}</div>` +
-        byStage[st].map(koCard).join('')).join('');
+      const stages = Object.keys(byStage).sort((a, b) => {
+        let ia = STAGE_ORDER.indexOf(a), ib = STAGE_ORDER.indexOf(b);
+        if (ia < 0) ia = 99; if (ib < 0) ib = 99; return ia - ib;
+      });
+      const tree = `<div class="bracket-tree">` + stages.map(st =>
+        `<div class="bcol"><div class="bcol-h">${esc(st)}</div>${byStage[st].map(bNode).join('')}</div>`
+      ).join('') + `</div>`;
+      return scorers + `<div class="stage-h">🗺 Сетка плей-офф</div>` + tree;
+    }
+    const STAGE_ORDER = ['1/16 финала', '1/8 финала', '1/4 финала', '1/2 финала', 'Матч за 3-е место', '🏆 Финал'];
+    function bNode(m) {   // узел лесенки с подсветкой прошедшего дальше
+      let hw = false, aw = false; const fin = m.status === 'FINISHED';
+      if (m.score && fin) { const p = m.score.split(':'); if (+p[0] > +p[1]) hw = true; else if (+p[1] > +p[0]) aw = true; }
+      const sc = m.score ? m.score.split(':') : ['', ''];
+      return `<div class="bnode ${fin ? 'fin' : ''} ${(hw || aw) ? 'adv' : ''}">
+        <div class="bteam ${hw ? 'bwin' : ''}">${flag(m.home_flag, 'bk')}<span class="bnm">${esc(m.home)}</span><span class="bsc">${sc[0]}</span></div>
+        <div class="bteam ${aw ? 'bwin' : ''}">${flag(m.away_flag, 'bk')}<span class="bnm">${esc(m.away)}</span><span class="bsc">${sc[1]}</span></div>
+      </div>`;
     }
     function koCard(m) {   // 🎞 карточка плей-офф с подсветкой проходящего дальше
       let hw = false, aw = false;
@@ -1156,6 +1263,19 @@
         (s.fav_score ? `<div class="hk-fav">⭐ Любимый счёт: <b>${s.fav_score}</b> · сыграно ставок: ${s.total}</div>` : '') +
         `</div>`;
     }
+    function streakCalendar(me) {   // 📅 сетка дней с отметками заходов (гитхаб-стайл)
+      const set = new Set((me && me.checkin_days) || []);
+      const today = new Date();
+      const iso = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+      const todayIso = iso(today);
+      let cells = '';
+      for (let i = 34; i >= 0; i--) {
+        const dt = new Date(today); dt.setDate(today.getDate() - i); const k = iso(dt);
+        cells += `<div class="cal-cell ${set.has(k) ? 'on' : ''} ${k === todayIso ? 'today' : ''}">${dt.getDate()}</div>`;
+      }
+      return `<div class="block"><h3>📅 Дни в клубе (5 недель)</h3><div class="cal-grid">${cells}</div>
+        <div class="cal-foot">Отмечено заходов: <b>${set.size}</b>${me && me.daily_streak ? ` · серия ${me.daily_streak}🔥 — не прерывай!` : ''}</div></div>`;
+    }
     function form5Html(me) {   // 📊 полоса последних 5 ставок (🟢🔴⚪️)
       const raw = (me && me.form5) || [];
       const dots = raw.slice().reverse().map(r =>   // backend отдаёт свежие первыми → разворачиваем
@@ -1170,15 +1290,21 @@
       const idx = list.findIndex(o => o.uid === myId);
       if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Поставь прогноз на вкладке «Матчи» — и появишься.</div>' + championBlock(d); }
       const o = list[idx]; ME = o; ME.pos = idx + 1;
+      // ⚡️ молния-стрик: при серии точных аватар «заряжается», ярче с длиной серии
+      const charged = (o.streak || 0) >= 3, ch = Math.min(1, (o.streak || 0) / 8).toFixed(2);
+      const avaHtml = o.photo
+        ? `<img class="big-ava${avaFrame(o)}${charged ? ' charged' : ''}" style="--ch:${ch}" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
+        : `<div class="big-ava${avaFrame(o)}${charged ? ' charged' : ''}" style="--ch:${ch};background:${o.color}">${o.totem || '🎲'}</div>`;
+      const bolts = charged
+        ? `<span class="bolt" style="top:-6px;left:4px">⚡️</span><span class="bolt" style="top:12px;right:-2px;animation-delay:.4s">⚡️</span><span class="bolt" style="bottom:-2px;left:20px;animation-delay:.75s">⚡️</span>`
+        : '';
       const earnedEmojis = (o.ach || []).map(a => a.emoji);
       const have = new Set(earnedEmojis);
       // каталог игровых ачивок + заработанные клубные (чтобы заслуженные тоже светились)
       const allBadges = [...new Set([...ALL_ACH, ...earnedEmojis])];
       const badges = allBadges.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}" onclick="badgeInfo('${e}')">${e}</span>`).join('');
       return `<div class="profile">
-        ${o.photo
-          ? `<img class="big-ava${avaFrame(o)}" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
-          : `<div class="big-ava${avaFrame(o)}" style="background:${o.color}">${o.totem || '🎲'}</div>`}
+        <div class="ava-wrap">${avaHtml}${bolts}</div>
         <div class="pname">${o.crown ? '🔮 ' : ''}${esc(o.name)} ${o.mom || ''}</div>
         ${o.title ? `<div class="pfac">🏷 «${esc(o.title)}»</div>` : ''}
         <div class="pfac">${o.faction ? 'фракция ' + esc(o.faction) : ''} · место #${idx + 1}</div>
@@ -1194,6 +1320,7 @@
         ${dailyBlock(d)}
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
         ${statsBlock(d)}
+        ${streakCalendar(d.me)}
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div>
           <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button>
           <button class="ach-open press" onclick="openAlbum()">🎴 Альбом сборных →</button>
@@ -1288,10 +1415,19 @@
     let betIdx = 0, hs = 1, as = 1;
     const PRESETS = [[1,0],[2,1],[1,1],[2,0],[0,0],[3,1]];
     function setScore(h, a) { hs = h; as = a; $('m-hs').textContent = hs; $('m-as').textContent = as; haptic(); }
-    function rollDice() {                       // 🎲 правдоподобный случайный счёт
+    function rollDice() {                       // 🎰 барабан: цифры прокручиваются и оседают
       const w = [0,0,0,1,1,1,1,2,2,2,3,4];       // голы реалистично смещены к 0-2
-      setScore(w[Math.floor(Math.random()*w.length)], w[Math.floor(Math.random()*w.length)]);
-      celebrate('🎲');
+      const fh = w[Math.floor(Math.random()*w.length)], fa = w[Math.floor(Math.random()*w.length)];
+      const eh = $('m-hs'), ea = $('m-as'); if (!eh || !ea) { setScore(fh, fa); return; }
+      eh.classList.add('spin'); ea.classList.add('spin'); haptic();
+      let n = 0;
+      const iv = setInterval(() => {
+        eh.textContent = Math.floor(Math.random()*6); ea.textContent = Math.floor(Math.random()*6);
+        if (++n >= 13) {
+          clearInterval(iv); eh.classList.remove('spin'); ea.classList.remove('spin');
+          setScore(fh, fa); celebrate('🎲');
+        }
+      }, 55);
     }
     function openBet(i) { betIdx = i; const m = TODAY[i]; setScore(1, 1);
       $('m-title').textContent = m.home_flag + ' ' + m.home + ' — ' + m.away + ' ' + m.away_flag;
@@ -1426,6 +1562,10 @@
       updateNavBadges(DATA);
       document.body.classList.toggle('playoff', DATA.phase === 'playoff');
       applyTimeTheme();   // 🌗 фон под время суток
+      if (DATA.tournament_over && !finalShown) {   // 🏆 торжественный экран финала (раз)
+        let seen; try { seen = localStorage.getItem('kubik_final_seen'); } catch (e) {}
+        if (!seen) { finalShown = true; openFinal(); }
+      }
       if (DATA.me && DATA.me.crown && !crownCelebrated) {   // 👑 салют действующему Оракулу недели
         crownCelebrated = true; celebrate('👑'); confetti();
       }
