@@ -318,6 +318,8 @@
     .apg { height: 8px; border-radius: 5px; background: rgba(255,255,255,.08); margin-top: 9px; overflow: hidden; }
     .apg-bar { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width .6s ease; }
     .apg-l { font-size: 11px; color: var(--hint); margin-top: 4px; }
+    .ach-sub { font-size: 13px; font-weight: 800; color: var(--hint); letter-spacing: 1px;
+      margin: 16px 4px 10px; text-transform: uppercase; }
     .ach-open { width: 100%; border: none; background: var(--card2); color: var(--fg); border: 1px solid var(--line);
       border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     /* экспресс-билдер */
@@ -569,7 +571,11 @@
       '🎯': 'Снайпер — много точных счетов',
       '🌍': 'Глобус — ставил на 12+ разных сборных',
     };
-    function badgeInfo(e) { popup(e + ' Награда', ACH_DESC[e] || 'Достижение оракула'); }
+    function badgeInfo(e) {
+      let t = ACH_DESC[e];
+      if (!t && ME && ME.ach) { const f = ME.ach.find(a => a.emoji === e); if (f) t = f.title; }
+      popup(e + ' Награда', t || 'Достижение клуба');
+    }
     const ACH_META = [
       { e: '🥅', t: 'Мастер скуки', d: 'Угадал точный 0:0' },
       { e: '🧙', t: 'Нострадамус клуба', d: '5 точных счётов подряд', cur: (o) => o.streak || 0, max: () => 5 },
@@ -585,8 +591,10 @@
     ];
     function openAch() {
       const d = DATA, o = ME; if (!o) return;
-      const have = new Set((o.ach || []).map(a => a.emoji));
-      $('ach-list').innerHTML = ACH_META.map(a => {
+      const earned = o.ach || [];
+      const have = new Set(earned.map(a => a.emoji));
+      const metaEmojis = new Set(ACH_META.map(a => a.e));
+      let html = ACH_META.map(a => {
         const got = have.has(a.e);
         let prog = '';
         if (!got && a.max) {
@@ -596,6 +604,14 @@
         return `<div class="aitem ${got ? 'got' : ''}"><div class="aemo">${a.e}</div>
           <div class="ainfo"><div class="at">${a.t} ${got ? '✅' : ''}</div><div class="ad">${a.d}</div>${prog}</div></div>`;
       }).join('');
+      // ➕ заработанные клубные ачивки (за активность в чате), которых нет в игровом каталоге
+      const extra = earned.filter(a => !metaEmojis.has(a.emoji));
+      if (extra.length) {
+        html += `<div class="ach-sub">🏆 Клубные награды</div>` + extra.map(a =>
+          `<div class="aitem got"><div class="aemo">${a.emoji}</div>
+            <div class="ainfo"><div class="at">${esc(a.title)} ✅</div><div class="ad">Награда за жизнь в чате клуба</div></div></div>`).join('');
+      }
+      $('ach-list').innerHTML = html;
       $('ach-screen').classList.remove('hide');
     }
     function closeAch() { $('ach-screen').classList.add('hide'); }
@@ -857,8 +873,11 @@
       const idx = list.findIndex(o => o.uid === myId);
       if (idx < 0) { ME = null; return '<div class="empty">Ты ещё не в таблице 🎭<br>Поставь прогноз на вкладке «Матчи» — и появишься.</div>' + championBlock(d); }
       const o = list[idx]; ME = o; ME.pos = idx + 1;
-      const have = new Set((o.ach || []).map(a => a.emoji));
-      const badges = ALL_ACH.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}" onclick="badgeInfo('${e}')">${e}</span>`).join('');
+      const earnedEmojis = (o.ach || []).map(a => a.emoji);
+      const have = new Set(earnedEmojis);
+      // каталог игровых ачивок + заработанные клубные (чтобы заслуженные тоже светились)
+      const allBadges = [...new Set([...ALL_ACH, ...earnedEmojis])];
+      const badges = allBadges.map(e => `<span class="badge ${have.has(e) ? '' : 'locked'}" onclick="badgeInfo('${e}')">${e}</span>`).join('');
       return `<div class="profile">
         ${o.photo
           ? `<img class="big-ava" src="${api('avatar/' + o.photo)}" data-c="${o.color}" data-t="${o.totem || '🎲'}" onerror="avaErr(this)">`
