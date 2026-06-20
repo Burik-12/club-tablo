@@ -546,6 +546,41 @@
     .final-hero .fchamp { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #ffce54, #fff, #ffce54);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .final-hero .fsub { font-size: 13px; color: var(--hint); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+    /* ── ⚔️ дуэли 1×1 ── */
+    .duel-row { padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .duel-row:last-of-type { border-bottom: none; }
+    .duel-vs { font-size: 14px; font-weight: 700; }
+    .duel-vs .vs { color: var(--live); margin: 0 4px; }
+    .duel-m { font-size: 12.5px; color: var(--hint); margin-top: 3px; }
+    .duel-s { font-size: 12px; margin-top: 3px; color: var(--accent2); font-weight: 600; }
+    /* ── 🌧 погодный слой ── */
+    .wx-layer { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .wx-drop { position: absolute; top: -12%; width: 1.5px; height: 16px; border-radius: 1px;
+      background: linear-gradient(transparent, rgba(150,190,255,.55)); animation: wxfall linear infinite; }
+    @keyframes wxfall { to { transform: translateY(120vh); } }
+    .wx-sun { position: fixed; top: -90px; right: -90px; width: 260px; height: 260px; z-index: -1; pointer-events: none;
+      border-radius: 50%; background: radial-gradient(circle, rgba(255,206,84,.22), transparent 65%); animation: wxsun 6s ease-in-out infinite; }
+    @keyframes wxsun { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: .85; transform: scale(1.08); } }
+    /* ── 🃏 раздача карт альбома ── */
+    .acard.deal { animation: dealin .5s cubic-bezier(.2,.7,.3,1) both; }
+    @keyframes dealin { from { opacity: 0; transform: translate(40px, -60px) rotate(22deg) scale(.6); }
+      to { opacity: 1; transform: none; } }
+    /* ── 🏅 влёт новой ачивки ── */
+    .ach-pop { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; }
+    .ach-pop .card-pop { background: linear-gradient(160deg, #1c2236, #0c0e16); border: 1.5px solid var(--gold);
+      border-radius: 22px; padding: 22px 26px; text-align: center; box-shadow: 0 14px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(255,206,84,.3);
+      animation: achpop 2.4s ease forwards; position: relative; overflow: hidden; max-width: 280px; }
+    .ach-pop .card-pop::after { content: ''; position: absolute; inset: 0;
+      background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.35) 50%, transparent 60%);
+      transform: translateX(-120%); animation: shine 1.4s ease .4s; }
+    @keyframes achpop { 0% { transform: perspective(600px) rotateY(90deg) scale(.7); opacity: 0; }
+      18% { transform: perspective(600px) rotateY(0) scale(1.05); opacity: 1; }
+      26% { transform: scale(1); } 82% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(.94) translateY(-12px); } }
+    .ach-pop .ap-emo { font-size: 58px; filter: drop-shadow(0 4px 12px rgba(255,206,84,.5)); }
+    .ach-pop .ap-h { font-size: 12px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; font-weight: 800; }
+    .ach-pop .ap-t { font-size: 17px; font-weight: 800; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -893,14 +928,14 @@
         а чем чаще ставишь — тем «ярче»: <b>обычная → блестящая ✨ → голографическая 🌈</b>.
         <div class="album-pg"><div style="width:${pct}%"></div></div>` +
         (n >= total ? '🏆 Альбом собран полностью — ты объехал весь чемпионат!' : '');
-      $('album-grid').innerHTML = teams.map(t => {
+      $('album-grid').innerHTML = teams.map((t, i) => {
         const c = lvls[t.en] || 0;
         const have = c > 0 || got.has(t.en);
         let cls = have ? 'got' : 'miss';
         if (c >= 4) cls += ' holo'; else if (c >= 2) cls += ' shiny';
         if (have && t.en === favEn) cls += ' fav';
         const lvl = c >= 4 ? '🌈 фольга' : c >= 2 ? '✨ блеск' : '';
-        return `<div class="acard ${cls}"><div class="afl">${flag(t.flag, 'card')}</div><div class="anm">${esc(t.ru)}</div>${lvl ? `<div class="alvl">${lvl}</div>` : ''}</div>`;
+        return `<div class="acard deal ${cls}" style="animation-delay:${(i * 0.022).toFixed(3)}s"><div class="afl">${flag(t.flag, 'card')}</div><div class="anm">${esc(t.ru)}</div>${lvl ? `<div class="alvl">${lvl}</div>` : ''}</div>`;
       }).join('');
       $('album-screen').classList.remove('hide'); haptic();
     }
@@ -941,17 +976,23 @@
         if (!m.score) return;
         const prev = prevScores[m.id];
         const live = m.status === 'IN_PLAY' || m.status === 'PAUSED';
-        if (scoresSeen && live && prev && m.score !== prev) goalToast(m);
+        if (scoresSeen && live && prev && m.score !== prev) {
+          const pn = prev.split(':'), cn = m.score.split(':');
+          let team = '';
+          if (+cn[0] > +pn[0]) team = m.home; else if (+cn[1] > +pn[1]) team = m.away;
+          goalToast(m, team);
+        }
         prevScores[m.id] = m.score;
       });
       scoresSeen = true;
     }
-    function goalToast(m) {
+    function goalToast(m, team) {
       const t = document.createElement('div'); t.className = 'gtoast';
       t.textContent = `⚽ ГОЛ! ${m.home_flag} ${m.home} ${m.score} ${m.away} ${m.away_flag}`;
       document.body.appendChild(t); setTimeout(() => t.remove(), 3100);
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-      crowdRoar();   // 🔊 рёв трибун
+      buzz('goal');   // 📲 вибро-узор гола
+      crowdRoar();    // 🔊 рёв трибун
+      speak(team ? `Гоооол! ${team}` : 'Гоооол!');   // 🎙 комментатор
     }
     function ago(ts) { const d = Math.max(0, Math.floor(Date.now()/1000 - ts));
       if (d < 60) return 'только что'; if (d < 3600) return Math.floor(d/60)+' мин'; return Math.floor(d/3600)+' ч'; }
@@ -1018,6 +1059,26 @@
         src.start(t0); src.stop(t0 + dur);
       } catch (e) {}
     }
+    // 📲 виброотклик-узоры: у каждого события свой ритм
+    function buzz(kind) {
+      try {
+        const h = tg && tg.HapticFeedback, v = (p) => navigator.vibrate && navigator.vibrate(p);
+        if (kind === 'goal') { h && h.notificationOccurred('success'); v([60, 40, 130]); }
+        else if (kind === 'exact') { h && h.notificationOccurred('success'); v([30, 30, 30, 30, 90]); }
+        else if (kind === 'allin') { h && h.impactOccurred('heavy'); v([130, 60, 130]); }
+        else if (kind === 'coin') { h && h.impactOccurred('light'); v(45); }
+        else { h && h.selectionChanged(); }
+      } catch (e) {}
+    }
+    // 🎙 голосовой комментатор (синтез речи браузера)
+    function speak(text) {
+      try {
+        if (!('speechSynthesis' in window)) return;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ru-RU'; u.rate = 1.05; u.pitch = 1.15; u.volume = 0.9;
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      } catch (e) {}
+    }
     // 🃏 переворот карточки ставки
     function flipBet(e, el) { e.stopPropagation(); el.classList.toggle('on'); haptic(); }
     // 📈 плавная прокрутка целого числа (место/точные/серия)
@@ -1041,6 +1102,57 @@
       return `<div class="island"><div class="scene"><span class="palm">🌴</span></div>
         <div class="dice-roll">🎲</div><div class="sand"></div>
         <div class="lt">Раскладываю табло… 🌊</div></div>`;
+    }
+    // 🌧 погодный слой под реальную погоду на Пхангане (open-meteo, без ключа)
+    let wxDone = false;
+    function applyWeather() {
+      if (wxDone) return; wxDone = true;
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=9.73&longitude=100.03&current=weather_code')
+        .then(r => r.json()).then(j => renderWeather(j && j.current && j.current.weather_code)).catch(() => {});
+    }
+    function renderWeather(code) {
+      document.querySelectorAll('.wx-layer, .wx-sun').forEach(e => e.remove());
+      if (code == null) return;
+      const rainy = (code >= 51 && code <= 99);   // морось/дождь/ливень/гроза
+      const clear = code === 0 || code === 1;
+      if (rainy) {
+        const layer = document.createElement('div'); layer.className = 'wx-layer';
+        for (let i = 0; i < 46; i++) {
+          const d = document.createElement('div'); d.className = 'wx-drop';
+          d.style.left = Math.random() * 100 + 'vw';
+          d.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+          d.style.animationDelay = (Math.random() * 1.4) + 's';
+          d.style.opacity = (0.3 + Math.random() * 0.5);
+          layer.appendChild(d);
+        }
+        document.body.appendChild(layer);
+      } else if (clear) {
+        const sun = document.createElement('div'); sun.className = 'wx-sun'; document.body.appendChild(sun);
+      }
+    }
+    // 🏅 влёт новой ачивки (сравниваем с запомненными)
+    function checkNewAchievements(d) {
+      const mine = (d.oracles || []).find(o => o.uid === myId);
+      if (!mine || !mine.ach) return;
+      const current = mine.ach.map(a => a.emoji);
+      let seen; try { seen = JSON.parse(localStorage.getItem('kubik_seen_ach') || 'null'); } catch (e) { seen = null; }
+      if (!seen) {   // первый запуск — просто запоминаем, без шквала попапов
+        try { localStorage.setItem('kubik_seen_ach', JSON.stringify(current)); } catch (e) {}
+        return;
+      }
+      const seenSet = new Set(seen);
+      const fresh = mine.ach.filter(a => !seenSet.has(a.emoji));
+      if (fresh.length) {
+        fresh.forEach((a, i) => setTimeout(() => achPop(a), i * 2600));
+        try { localStorage.setItem('kubik_seen_ach', JSON.stringify(current)); } catch (e) {}
+      }
+    }
+    function achPop(a) {
+      const wrap = document.createElement('div'); wrap.className = 'ach-pop';
+      wrap.innerHTML = `<div class="card-pop"><div class="ap-emo">${a.emoji}</div>
+        <div class="ap-h">🏅 Новая награда</div><div class="ap-t">${esc(a.title)}</div></div>`;
+      document.body.appendChild(wrap); confetti(); buzz('exact'); playChime();
+      setTimeout(() => wrap.remove(), 2500);
     }
     // ⏳ сколько осталось до начала матча (= закрытие ставок)
     function untilKick(ts) {
@@ -1327,6 +1439,7 @@
           <button class="ach-open press" onclick="openWrapped()">🎬 Твой ЧМ — итоги →</button>
           <button class="ach-open press" onclick="openRules()">📖 Как это работает →</button></div>
         ${historyBlock(d)}
+        ${duelsBlock(d.me)}
         ${championBlock(d)}
         <button class="share press" onclick="shareCard()">🪪 Поделиться паспортом</button>
       </div>`;
@@ -1454,7 +1567,8 @@
         .then(r => r.json()).then(res => {
           if (res.ok) {
             haptic('ok'); if (cel) { celebrate(cel); confetti(); }
-            if (cel === '🪙') coinBurst();   // 🪙 монеты прилетают в счётчик с подзвоном
+            if (cel === '🪙') { coinBurst(); buzz('coin'); }   // 🪙 монеты + вибро
+            if (cel === '🔥') buzz('allin');   // 🔥 ва-банк — тяжёлый отклик
             popup(okTitle, res.msg); if (res.state) { DATA = res.state; renderAll(); }
             $('modal-bg').classList.remove('open'); $('champ-bg').classList.remove('open');
           } else { popup('Не вышло', res.error || res.msg || 'Ошибка'); }
@@ -1517,6 +1631,20 @@
         e.preventDefault(); try { tg.openLink(wl.href); } catch (x) { window.open(wl.href, '_blank'); } });
       $('match-bg').classList.add('open');
     }
+    function duelsBlock(me) {   // ⚔️ карточки дуэлей 1×1
+      const ds = (me && me.duels) || [];
+      const st = { pending: '⏳ ждёт ответа', accepted: '⚔️ в бою', settled: '✅ сыграна', declined: '🏳️ отклонена' };
+      const list = ds.map(d => {
+        const left = d.me_challenger ? 'ты' : esc(d.opp), right = d.me_challenger ? esc(d.opp) : 'ты';
+        return `<div class="duel-row"><div class="duel-vs">${left}<span class="vs">×</span>${right}</div>
+          <div class="duel-m">${d.match}</div>
+          <div class="duel-s">${st[d.status] || d.status} · ставка ${d.stake}🪙</div></div>`;
+      }).join('');
+      return `<div class="block"><h3>⚔️ Дуэли 1×1</h3>${list ||
+        '<div class="pfac" style="text-align:left">Пока без дуэлей.</div>'}
+        <div class="hint-sm" style="text-align:left;margin-top:9px">Бросить вызов другу: в чате <b>ответь</b> на его сообщение командой
+        <b>/дуэль Бразилия Сербия 10</b> (команды матча и ставка). Он отвечает <b>/принять</b> — и чей прогноз точнее, тот забирает дублоны.</div></div>`;
+    }
     function championBlock(d) {
       const c = d.me && d.me.champion;
       if (!d.champion_open) return c ? `<div class="block"><h3>🏆 Чемпион</h3><div class="pfac">${c.flag} ${esc(c.ru)} · окно закрыто</div></div>` : '';
@@ -1569,6 +1697,7 @@
       if (DATA.me && DATA.me.crown && !crownCelebrated) {   // 👑 салют действующему Оракулу недели
         crownCelebrated = true; celebrate('👑'); confetti();
       }
+      checkNewAchievements(DATA);   // 🏅 влёт новых наград
     }
     document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
       haptic();
@@ -1593,6 +1722,7 @@
     $('v-oracles').innerHTML = islandLoader();   // 🏖 островной лоадер до первой загрузки
     maybeWelcome();                          // 🎬 приветствие при первом входе
     applyTimeTheme();                        // 🌗 тема под время суток сразу
+    applyWeather();                          // 🌧 погодный слой под Пханган
     load();
     setInterval(load, 30000);   // 🔴 лайв-автообновление каждые 30 c
   </script>
