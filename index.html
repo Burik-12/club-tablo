@@ -38,7 +38,11 @@
       color: var(--hint); -webkit-text-fill-color: var(--hint); text-transform: uppercase; }
     .head .upd { font-size: 10px; color: var(--hint); text-align: right; max-width: 76px; }
     .view { display: none; animation: fade .28s ease; }
-    .view.active { display: block; }
+    .view.active { display: block; animation: viewIn .26s ease both; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    @keyframes liveGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,92,108,.0); } 50% { box-shadow: 0 0 0 3px rgba(255,92,108,.25); } }
+    @keyframes shine { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(220%); } }
     @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .banner {
       background: linear-gradient(120deg, #ffce54, #ff8e3c); color: #2a1c00;
@@ -78,7 +82,8 @@
     .sb-mid { flex-shrink: 0; min-width: 88px; text-align: center; }
     .sb-score { font-size: 28px; font-weight: 800; letter-spacing: 1px;
       background: #0c0e16; border: 1px solid var(--line); border-radius: 11px; padding: 5px 4px; }
-    .sb-score.live { color: var(--live); border-color: rgba(255,92,108,.5); }
+    .sb-score.live { color: var(--live); border-color: rgba(255,92,108,.5); animation: liveGlow 1.8s ease-in-out infinite; }
+    .badge-live { animation: pulse 1.3s ease-in-out infinite; }
     .sb-vs { font-size: 13px; color: var(--hint); font-weight: 700; }
     .sb-when { font-size: 11px; color: var(--hint); margin-top: 3px; }
     .mctl { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -358,6 +363,27 @@
     .wstat .wl { flex: 1; font-size: 13.5px; color: var(--hint); }
     .wstat .wv { font-size: 15px; font-weight: 800; }
     .wfoot { font-size: 13px; color: var(--hint); margin-top: 12px; text-align: center; line-height: 1.5; }
+    /* 🎴 альбом сборных */
+    .album-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .acard { aspect-ratio: 3/4; border-radius: 13px; border: 1px solid var(--line); background: var(--card);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      padding: 6px 3px; position: relative; overflow: hidden; }
+    .acard.got { background: linear-gradient(160deg, rgba(124,92,255,.22), rgba(34,211,238,.12)); border-color: rgba(124,92,255,.5); }
+    .acard .afl { font-size: 30px; line-height: 1; }
+    .acard.miss .afl { filter: grayscale(1); opacity: .35; }
+    .acard .anm { font-size: 9.5px; text-align: center; color: var(--hint); line-height: 1.15; }
+    .acard.got .anm { color: var(--fg); font-weight: 600; }
+    .acard.got::after { content: '✓'; position: absolute; top: 3px; right: 5px; font-size: 10px; color: var(--accent2); }
+    .album-pg { height: 9px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; margin: 8px 0 14px; }
+    .album-pg > div { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 6px; transition: width .6s; }
+    /* 🖋 почерк / личная статистика */
+    .hk-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; }
+    .hk-l { font-size: 12.5px; width: 130px; flex-shrink: 0; color: var(--hint); }
+    .hk-bar { flex: 1; height: 9px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .hk-bar > div { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .7s ease; }
+    .hk-v { font-size: 12.5px; font-weight: 700; width: 38px; text-align: right; }
+    .hk-fav { font-size: 13px; color: var(--hint); margin-top: 11px; }
+    .hk-fav b { color: var(--gold); }
   </style>
 </head>
 <body>
@@ -424,6 +450,12 @@
   <div class="ach-screen hide" id="ach-screen">
     <div class="ach-head"><h2>🏅 Награды и прогресс</h2><button class="x press" onclick="closeAch()">✕</button></div>
     <div id="ach-list"></div>
+  </div>
+
+  <div class="ach-screen hide" id="album-screen">
+    <div class="ach-head"><h2>🎴 Альбом сборных</h2><button class="x press" onclick="closeAlbum()">✕</button></div>
+    <div class="rlead" id="album-lead"></div>
+    <div id="album-grid" class="album-grid"></div>
   </div>
 
   <div class="ach-screen hide" id="wrapped-screen">
@@ -526,7 +558,7 @@
     const myId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : null;
     const medals = ["🥇", "🥈", "🥉"];
     const podium = ["gold", "silver", "bronze"];
-    const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍", "👑", "🔮", "⚔️"];
+    const ALL_ACH = ["🥅", "🧙", "🐴", "💩", "🎟", "🅰️", "🎯", "🌍", "👑", "🔮", "⚔️", "🌙", "🏃", "🏹", "💰"];
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     function facCls(o) {   // класс кольца аватарки по фракции
@@ -588,6 +620,10 @@
       { e: '👑', t: 'Оракул недели', d: 'Впервые надел корону лучшего за неделю' },
       { e: '🔮', t: 'Триждывенчанный', d: 'Носил корону недели 3 раза за сезон', cur: (o, d) => { const m = (d.crown_hall || []).find(r => r.uid === myId); return m ? m.weeks : 0; }, max: () => 3 },
       { e: '⚔️', t: 'Цареубийца', d: 'Сверг прежнего Оракула и забрал корону' },
+      { e: '🌙', t: 'Ночной оракул', d: 'Поставил прогноз ночью (00:00–05:00)' },
+      { e: '🏃', t: 'Марафонец', d: 'Заходил в табло 7 дней подряд', cur: (o, d) => (d.me && d.me.daily_streak) || 0, max: () => 7 },
+      { e: '🏹', t: 'Снайпер', d: '3 точных счёта за турнир', cur: (o, d) => (d.me ? d.me.exact : o.exact) || 0, max: () => 3 },
+      { e: '💰', t: 'Магнат', d: 'Накопил 100 дублонов', cur: (o) => o.coins || 0, max: () => 100 },
     ];
     function openAch() {
       const d = DATA, o = ME; if (!o) return;
@@ -635,6 +671,21 @@
       $('wrapped-screen').classList.remove('hide'); haptic();
     }
     function closeWrapped() { $('wrapped-screen').classList.add('hide'); }
+    function openAlbum() {
+      const d = DATA, teams = d.teams || [];
+      const got = new Set((d.me && d.me.collected) || []);
+      const n = teams.filter(t => got.has(t.en)).length, total = teams.length || 1;
+      const pct = Math.round(n / total * 100);
+      $('album-lead').innerHTML = `Собрано <b>${n} из ${total}</b> сборных. Ставишь на матч сборной — её карточка открывается.
+        <div class="album-pg"><div style="width:${pct}%"></div></div>` +
+        (n >= total ? '🏆 Альбом собран полностью — ты объехал весь чемпионат!' : '');
+      $('album-grid').innerHTML = teams.map(t => {
+        const have = got.has(t.en);
+        return `<div class="acard ${have ? 'got' : 'miss'}"><div class="afl">${t.flag}</div><div class="anm">${esc(t.ru)}</div></div>`;
+      }).join('');
+      $('album-screen').classList.remove('hide'); haptic();
+    }
+    function closeAlbum() { $('album-screen').classList.add('hide'); }
     function shareWrapped() {
       const me = (DATA || {}).me; if (!me) return;
       let txt = `🎬 Мой ЧМ-2026 в Клубе Сомнительных Решений:\n🏅 место #${me.pos || '—'} · 🪙 ${me.coins} · 🎯 ${me.exact}/${me.preds} точных`;
@@ -867,6 +918,21 @@
           ${f.captain ? `<div class="sub" style="margin-top:7px;color:var(--hint)">👑 капитан: ${esc(f.captain)}</div>` : ''}
           <div class="bar-bg"><div class="bar" style="width:${Math.round(f.coins/max*100)}%;background:${palette[i%2]}"></div></div></div>`).join('');
     }
+    function statsBlock(d) {
+      const s = d.me && d.me.stats;
+      if (!s || !s.total) return '';
+      const bars = [
+        ['🎯 Точность', s.accuracy, 'Доля сыгранных ставок с очками'],
+        ['🤝 Ставка на ничью', s.draw_pct, 'Как часто закладываешь ничью'],
+        ['🔥 Любишь тоталы', s.over_pct, 'Доля прогнозов на 3+ гола'],
+      ];
+      return `<div class="block"><h3>🖋 Твой почерк</h3>` +
+        bars.map(b => `<div class="hk-row"><div class="hk-l">${b[0]}</div>
+          <div class="hk-bar"><div style="width:${Math.min(100, b[1])}%"></div></div>
+          <div class="hk-v">${b[1]}%</div></div>`).join('') +
+        (s.fav_score ? `<div class="hk-fav">⭐ Любимый счёт: <b>${s.fav_score}</b> · сыграно ставок: ${s.total}</div>` : '') +
+        `</div>`;
+    }
     let ME = null;
     function renderMe(d) {
       const list = d.oracles || [];
@@ -894,8 +960,10 @@
         </div>
         ${dailyBlock(d)}
         <div class="block"><h3>📈 Форма (14 дней)</h3><canvas id="spark" width="600" height="120"></canvas></div>
+        ${statsBlock(d)}
         <div class="block"><h3>🏅 Награды</h3><div class="badges">${badges}</div>
           <button class="ach-open press" onclick="openAch()">🏅 Все награды и прогресс →</button>
+          <button class="ach-open press" onclick="openAlbum()">🎴 Альбом сборных →</button>
           <button class="ach-open press" onclick="openWrapped()">🎬 Твой ЧМ — итоги →</button>
           <button class="ach-open press" onclick="openRules()">📖 Как это работает →</button></div>
         ${historyBlock(d)}
@@ -1107,7 +1175,7 @@
     $('match-bg').onclick = (e) => { if (e.target.id === 'match-bg') e.target.classList.remove('open'); };
     $('exp-bg').onclick = (e) => { if (e.target.id === 'exp-bg') e.target.classList.remove('open'); };
 
-    let DATA = null, active = 'oracles';
+    let DATA = null, active = 'oracles', crownCelebrated = false;
     function renderAll() {
       if (!DATA) return;
       $('v-oracles').innerHTML = renderOracles(DATA);
@@ -1123,6 +1191,9 @@
       checkGoals(DATA);   // ⚽ тост, если по live-матчу забили с прошлого обновления
       updateNavBadges(DATA);
       document.body.classList.toggle('playoff', DATA.phase === 'playoff');
+      if (DATA.me && DATA.me.crown && !crownCelebrated) {   // 👑 салют действующему Оракулу недели
+        crownCelebrated = true; celebrate('👑'); confetti();
+      }
     }
     document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
       haptic();
